@@ -1,10 +1,9 @@
-import React, { useState } from "react";
+import React from "react";
 
 import {
   View,
   FlatList,
   StyleSheet,
-  Alert,
   Image,
 } from "react-native";
 
@@ -15,78 +14,37 @@ import {
   Chip,
 } from "react-native-paper";
 
-type Visitor = {
-  id: string;
-  fullName: string;
-  companyName: string;
-  designation: string;
-  inTime: string;
-  status: "ACTIVE" | "CHECKED_OUT";
-  image?: string;
-};
+import {
+  useVisitor,
+} from "../context/VisitorContext";
 
 export default function ActiveVisitorsScreen() {
-  const [visitors, setVisitors] = useState<Visitor[]>([
-    {
-      id: "1",
-      fullName: "John Doe",
-      companyName: "ABC Pvt Ltd",
-      designation: "Manager",
-      inTime: "10:30 AM",
-      status: "ACTIVE",
-      image:
-        "https://i.pravatar.cc/150?img=1",
-    },
-
-    {
-      id: "2",
-      fullName: "Jane Smith",
-      companyName: "XYZ Solutions",
-      designation: "Consultant",
-      inTime: "11:15 AM",
-      status: "ACTIVE",
-      image:
-        "https://i.pravatar.cc/150?img=2",
-    },
-  ]);
-
-  const handleCheckout = (id: string) => {
-    const updatedVisitors = visitors.map(
-      (visitor) => {
-        if (visitor.id === id) {
-          return {
-            ...visitor,
-            status: "CHECKED_OUT",
-          };
-        }
-
-        return visitor;
-      }
-    );
-
-    setVisitors(updatedVisitors);
-
-    Alert.alert(
-      "Checked Out",
-      "Visitor checked out successfully."
-    );
-  };
+  const {
+    visitors,
+    checkoutVisitor,
+  } = useVisitor();
 
   const renderVisitor = ({
     item,
   }: {
-    item: Visitor;
+    item: any;
   }) => (
     <Card style={styles.card}>
       <Card.Content>
 
         <View style={styles.row}>
 
+          {/* Visitor Image */}
           <Image
-            source={{ uri: item.image }}
+            source={{
+              uri:
+                item.image ||
+                "https://via.placeholder.com/150",
+            }}
             style={styles.image}
           />
 
+          {/* Visitor Info */}
           <View style={styles.infoContainer}>
 
             <Text variant="titleMedium">
@@ -102,9 +60,14 @@ export default function ActiveVisitorsScreen() {
             </Text>
 
             <Text>
+              Mobile: {item.mobileNo}
+            </Text>
+
+            <Text>
               IN: {item.inTime}
             </Text>
 
+            {/* Status */}
             <Chip
               style={
                 item.status === "ACTIVE"
@@ -118,12 +81,13 @@ export default function ActiveVisitorsScreen() {
           </View>
         </View>
 
+        {/* Checkout Button */}
         {item.status === "ACTIVE" && (
           <Button
             mode="contained"
             style={styles.checkoutButton}
             onPress={() =>
-              handleCheckout(item.id)
+              checkoutVisitor(item.id)
             }
           >
             CHECK OUT
@@ -136,14 +100,24 @@ export default function ActiveVisitorsScreen() {
 
   return (
     <View style={styles.container}>
-      <FlatList
-        data={visitors}
-        keyExtractor={(item) => item.id}
-        renderItem={renderVisitor}
-        contentContainerStyle={{
-          paddingBottom: 20,
-        }}
-      />
+
+      {visitors.length === 0 ? (
+        <View style={styles.emptyContainer}>
+          <Text variant="titleMedium">
+            No Active Visitors
+          </Text>
+        </View>
+      ) : (
+        <FlatList
+          data={visitors}
+          keyExtractor={(item) => item.id}
+          renderItem={renderVisitor}
+          contentContainerStyle={{
+            paddingBottom: 20,
+          }}
+        />
+      )}
+
     </View>
   );
 }
@@ -188,5 +162,11 @@ const styles = StyleSheet.create({
 
   checkoutButton: {
     marginTop: 20,
+  },
+
+  emptyContainer: {
+    flex: 1,
+    justifyContent: "center",
+    alignItems: "center",
   },
 });

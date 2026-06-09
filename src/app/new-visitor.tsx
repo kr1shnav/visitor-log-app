@@ -1,23 +1,14 @@
-import React, { useState } from "react";
+import { useState } from "react";
 
-import {
-  StyleSheet,
-  ScrollView,
-  Image,
-  Alert,
-  View,
-} from "react-native";
+import { Alert, Image, ScrollView, StyleSheet, View } from "react-native";
 
-import {
-  TextInput,
-  Button,
-  Text,
-  Card,
-} from "react-native-paper";
+import { Button, Card, Text, TextInput } from "react-native-paper";
 
-import { useForm, Controller } from "react-hook-form";
+import { Controller, useForm } from "react-hook-form";
 
 import * as ImagePicker from "expo-image-picker";
+
+import { useVisitor } from "../context/VisitorContext";
 
 type FormData = {
   fullName: string;
@@ -30,33 +21,33 @@ type FormData = {
 };
 
 export default function NewVisitorScreen() {
-  const { control, handleSubmit, reset } =
-    useForm<FormData>();
+  const {
+    control,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm<FormData>();
 
-  const [image, setImage] =
-    useState<string | null>(null);
+  const { addVisitor } = useVisitor();
+
+  const [image, setImage] = useState<string | null>(null);
 
   // Capture Photo
   const pickImage = async () => {
-    const permissionResult =
-      await ImagePicker.requestCameraPermissionsAsync();
+    const permissionResult = await ImagePicker.requestCameraPermissionsAsync();
 
     if (!permissionResult.granted) {
-      Alert.alert(
-        "Permission Required",
-        "Camera permission is needed."
-      );
+      Alert.alert("Permission Required", "Camera permission is needed.");
+
       return;
     }
 
-    const result =
-      await ImagePicker.launchCameraAsync({
-        mediaTypes:
-          ImagePicker.MediaTypeOptions.Images,
-        allowsEditing: true,
-        aspect: [1, 1],
-        quality: 0.7,
-      });
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: true,
+      aspect: [1, 1],
+      quality: 0.7,
+    });
 
     if (!result.canceled) {
       setImage(result.assets[0].uri);
@@ -65,33 +56,39 @@ export default function NewVisitorScreen() {
 
   // Submit Form
   const onSubmit = (data: FormData) => {
+    // Photo Validation
+    if (!image) {
+      Alert.alert("Photo Required!!", "Please capture visitor photo!!");
+
+      return;
+    }
+
     const visitorData = {
+      id: Date.now().toString(),
+
       ...data,
+
       image,
-      inTime: new Date().toISOString(),
+
+      inTime: new Date().toLocaleTimeString(),
+
+      status: "ACTIVE" as const,
     };
 
-    console.log(visitorData);
+    addVisitor(visitorData);
 
-    Alert.alert(
-      "Success",
-      "Visitor entry submitted successfully."
-    );
+    Alert.alert("Success!!!", "Visitor entry submitted successfully!!!");
 
     reset();
+
     setImage(null);
   };
 
   return (
-    <ScrollView
-      contentContainerStyle={styles.container}
-    >
+    <ScrollView contentContainerStyle={styles.container}>
       <Card style={styles.card}>
         <Card.Content>
-          <Text
-            variant="headlineSmall"
-            style={styles.title}
-          >
+          <Text variant="headlineSmall" style={styles.title}>
             New Visitor Entry
           </Text>
 
@@ -99,43 +96,53 @@ export default function NewVisitorScreen() {
           <Controller
             control={control}
             name="fullName"
-            render={({
-              field: { onChange, value },
-            }) => (
+            rules={{
+              required: "Full name is required",
+            }}
+            render={({ field: { onChange, value } }) => (
               <TextInput
                 label="Full Name"
                 mode="outlined"
                 style={styles.input}
                 value={value}
                 onChangeText={onChange}
+                error={!!errors.fullName}
               />
             )}
           />
+
+          {errors.fullName && (
+            <Text style={styles.errorText}>{errors.fullName.message}</Text>
+          )}
 
           {/* Designation */}
           <Controller
             control={control}
             name="designation"
-            render={({
-              field: { onChange, value },
-            }) => (
+            rules={{
+              required: "Designation is required",
+            }}
+            render={({ field: { onChange, value } }) => (
               <TextInput
                 label="Designation"
                 mode="outlined"
                 style={styles.input}
                 value={value}
                 onChangeText={onChange}
+                error={!!errors.designation}
               />
             )}
           />
+
+          {errors.designation && (
+            <Text style={styles.errorText}>{errors.designation.message}</Text>
+          )}
 
           {/* Company Name */}
           <Controller
             control={control}
             name="companyName"
-            render={({
-              field: { onChange, value },
-            }) => (
+            render={({ field: { onChange, value } }) => (
               <TextInput
                 label="Company Name"
                 mode="outlined"
@@ -150,9 +157,16 @@ export default function NewVisitorScreen() {
           <Controller
             control={control}
             name="mobileNo"
-            render={({
-              field: { onChange, value },
-            }) => (
+            rules={{
+              required: "Mobile number is required",
+
+              pattern: {
+                value: /^[0-9]{10}$/,
+
+                message: "Enter a valid 10-digit mobile number",
+              },
+            }}
+            render={({ field: { onChange, value } }) => (
               <TextInput
                 label="Mobile Number"
                 mode="outlined"
@@ -160,17 +174,20 @@ export default function NewVisitorScreen() {
                 style={styles.input}
                 value={value}
                 onChangeText={onChange}
+                error={!!errors.mobileNo}
               />
             )}
           />
+
+          {errors.mobileNo && (
+            <Text style={styles.errorText}>{errors.mobileNo.message}</Text>
+          )}
 
           {/* Purpose */}
           <Controller
             control={control}
             name="purpose"
-            render={({
-              field: { onChange, value },
-            }) => (
+            render={({ field: { onChange, value } }) => (
               <TextInput
                 label="Purpose of Visit"
                 mode="outlined"
@@ -181,15 +198,13 @@ export default function NewVisitorScreen() {
             )}
           />
 
-          {/* Vertical Number */}
+          {/* Vehicle Number */}
           <Controller
             control={control}
             name="verticalNo"
-            render={({
-              field: { onChange, value },
-            }) => (
+            render={({ field: { onChange, value } }) => (
               <TextInput
-                label="Vertical Number"
+                label="Vehicle Number"
                 mode="outlined"
                 style={styles.input}
                 value={value}
@@ -202,9 +217,7 @@ export default function NewVisitorScreen() {
           <Controller
             control={control}
             name="remarks"
-            render={({
-              field: { onChange, value },
-            }) => (
+            render={({ field: { onChange, value } }) => (
               <TextInput
                 label="Remarks"
                 mode="outlined"
@@ -229,10 +242,7 @@ export default function NewVisitorScreen() {
           {/* Image Preview */}
           {image && (
             <View style={styles.imageContainer}>
-              <Image
-                source={{ uri: image }}
-                style={styles.image}
-              />
+              <Image source={{ uri: image }} style={styles.image} />
             </View>
           )}
 
@@ -270,6 +280,13 @@ const styles = StyleSheet.create({
 
   input: {
     marginBottom: 15,
+  },
+
+  errorText: {
+    color: "red",
+    marginTop: -10,
+    marginBottom: 10,
+    marginLeft: 5,
   },
 
   photoButton: {

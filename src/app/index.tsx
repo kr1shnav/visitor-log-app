@@ -9,12 +9,6 @@ export default function HomeScreen() {
         Visitor Log System
       </Text>
 
-      <Card style={styles.card}>
-        <Card.Content>
-          <Text variant="titleMedium">Visitor Management</Text>
-        </Card.Content>
-      </Card>
-
       <Button
         mode="contained"
         style={styles.button}
@@ -53,11 +47,6 @@ const styles = StyleSheet.create({
     marginBottom: 30,
     textAlign: "center",
     fontWeight: "bold",
-  },
-
-  card: {
-    marginBottom: 30,
-    padding: 10,
   },
 
   button: {
