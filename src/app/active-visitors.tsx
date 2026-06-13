@@ -1,22 +1,48 @@
-import { useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 import { FlatList, Image, StyleSheet, View } from 'react-native';
 
 import { Button, Card, Chip, Text, TextInput } from 'react-native-paper';
 
-import { useVisitor } from '../context/VisitorContext';
+import { getVisitors, checkoutVisitor } from '../services/supabaseService';
 
 export default function ActiveVisitorsScreen() {
-  const { visitors, checkoutVisitor } = useVisitor();
+  const [visitors, setVisitors] = useState<any[]>([]);
+
+  const [loading, setLoading] = useState(true);
 
   const [search, setSearch] = useState('');
+
+  useEffect(() => {
+    fetchVisitors();
+  }, []);
+  const handleCheckout = async (id: string) => {
+    try {
+      await checkoutVisitor(id);
+
+      await fetchVisitors();
+    } catch (error) {
+      console.log(error);
+    }
+  };
+  const fetchVisitors = async () => {
+    try {
+      const data = await getVisitors();
+
+      setVisitors(data || []);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const filteredVisitors = visitors.filter((visitor) => {
     const searchText = search.toLowerCase();
 
     return (
-      visitor.fullName.toLowerCase().includes(searchText) ||
-      visitor.mobileNo.includes(searchText)
+      visitor.full_name?.toLowerCase().includes(searchText) ||
+      visitor.mobile_no?.includes(searchText)
     );
   });
 
@@ -27,15 +53,15 @@ export default function ActiveVisitorsScreen() {
           <View>
             <Image
               source={{
-                uri: item.image || 'https://via.placeholder.com/150',
+                uri: item.photo_url || 'https://via.placeholder.com/150',
               }}
               style={styles.image}
             />
 
-            {item.idCardImage && (
+            {item.id_card_url && (
               <Image
                 source={{
-                  uri: item.idCardImage,
+                  uri: item.id_card_url,
                 }}
                 style={styles.idImage}
               />
@@ -43,25 +69,25 @@ export default function ActiveVisitorsScreen() {
           </View>
 
           <View style={styles.infoContainer}>
-            <Text variant='titleMedium'>{item.fullName}</Text>
+            <Text variant='titleMedium'>{item.full_name}</Text>
 
-            <Text>Company: {item.companyName}</Text>
+            <Text>Company: {item.company_name}</Text>
 
             <Text>Designation: {item.designation}</Text>
 
-            <Text>Mobile: {item.mobileNo}</Text>
+            <Text>Mobile: {item.mobile_no}</Text>
 
-            <Text>Vehicle: {item.vehicleNo}</Text>
+            <Text>Vehicle: {item.vehicle_no}</Text>
 
             <Text>Purpose: {item.purpose}</Text>
 
-            <Text>In Time: {item.inTime}</Text>
+            <Text>Status: {item.status}</Text>
 
-            {item.outTime && <Text>Out Time: {item.outTime}</Text>}
+            <Text>In Time: {new Date(item.in_time).toLocaleString()}</Text>
 
-            <Text>
-              ID Card: {item.idCardImage ? 'Available' : 'Not Provided'}
-            </Text>
+            {item.out_time && (
+              <Text>Out Time: {new Date(item.out_time).toLocaleString()}</Text>
+            )}
 
             <Chip
               style={
@@ -79,7 +105,7 @@ export default function ActiveVisitorsScreen() {
           <Button
             mode='contained'
             style={styles.checkoutButton}
-            onPress={() => checkoutVisitor(item.id)}
+            onPress={() => handleCheckout(item.id)}
           >
             CHECK OUT
           </Button>
@@ -87,6 +113,14 @@ export default function ActiveVisitorsScreen() {
       </Card.Content>
     </Card>
   );
+
+  if (loading) {
+    return (
+      <View style={styles.emptyContainer}>
+        <Text>Loading visitors...</Text>
+      </View>
+    );
+  }
 
   return (
     <View style={styles.container}>
@@ -149,7 +183,7 @@ const styles = StyleSheet.create({
     borderRadius: 6,
     marginTop: 8,
   },
-  
+
   infoContainer: {
     flex: 1,
   },

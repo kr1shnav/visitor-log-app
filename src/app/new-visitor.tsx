@@ -12,6 +12,8 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import { useVisitor } from '../context/VisitorContext';
 
+import { createVisitor, uploadVisitorPhoto } from '../services/supabaseService';
+
 type FormData = {
   fullName: string;
   designation: string;
@@ -82,42 +84,73 @@ export default function NewVisitorScreen() {
     }
   };
 
-  const onSubmit = (data: FormData) => {
-    const visitorData = {
-      id: Date.now().toString(),
+  const onSubmit = async (data: FormData) => {
+    try {
+      if (!image) {
+        Alert.alert('Photo Required', 'Please capture the visitor photo.');
+        return;
+      }
 
-      ...data,
+      // Upload Visitor Photo
+      const photoUrl = null;
 
-      image,
+      const visitorData = {
+        id: Date.now().toString(),
 
-      idCardImage: idImage,
+        ...data,
 
-      inTime: new Date().toLocaleTimeString(),
+        image,
 
-      status: 'ACTIVE' as const,
-    };
+        idCardImage: idImage,
 
-    if (!image) {
-      Alert.alert('Photo Required', 'Please capture the visitor photo.');
-      return;
+        inTime: new Date().toLocaleTimeString(),
+
+        status: 'ACTIVE' as const,
+      };
+
+      // Save to Supabase
+      await createVisitor({
+        full_name: data.fullName,
+
+        designation: data.designation,
+
+        company_name: data.companyName,
+
+        mobile_no: data.mobileNo,
+
+        purpose: data.purpose,
+
+        vehicle_no: data.vehicleNo,
+
+        remarks: data.remarks,
+
+        photo_url: null,
+
+        status: 'ACTIVE',
+      });
+
+      // Update local Context
+      addVisitor(visitorData);
+
+      Alert.alert('Success', 'Visitor saved successfully');
+
+      reset({
+        fullName: '',
+        designation: '',
+        companyName: '',
+        mobileNo: '',
+        purpose: '',
+        vehicleNo: '',
+        remarks: '',
+      });
+
+      setImage(null);
+      setIdImage(null);
+    } catch (error: any) {
+      console.log('FULL ERROR:', error);
+
+      Alert.alert('Error', error?.message || JSON.stringify(error));
     }
-
-    addVisitor(visitorData);
-
-    Alert.alert('Success', 'Visitor entry submitted successfully.');
-
-    reset({
-      fullName: '',
-      designation: '',
-      companyName: '',
-      mobileNo: '',
-      purpose: '',
-      vehicleNo: '',
-      remarks: '',
-    });
-
-    setImage(null);
-    setIdImage(null);
   };
 
   return (
@@ -277,7 +310,7 @@ export default function NewVisitorScreen() {
           <Text variant='titleMedium' style={{ marginBottom: 8 }}>
             Visitor Photo *
           </Text>
-          
+
           <Button
             mode='outlined'
             onPress={pickImage}
