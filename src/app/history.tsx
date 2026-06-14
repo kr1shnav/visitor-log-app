@@ -8,6 +8,10 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 
 import { getVisitors } from '../services/supabaseService';
 
+import * as FileSystem from 'expo-file-system/legacy';
+
+import * as Sharing from 'expo-sharing';
+
 export default function VisitorRecordsScreen() {
   const [visitors, setVisitors] = useState<any[]>([]);
   const [filteredVisitors, setFilteredVisitors] = useState<any[]>([]);
@@ -126,6 +130,71 @@ export default function VisitorRecordsScreen() {
     setFilteredVisitors(results);
 
     setSearchPressed(true);
+  };
+
+  const exportCSV = async () => {
+    try {
+      if (filteredVisitors.length === 0) {
+        alert('No records to export');
+        return;
+      }
+
+      const headers = [
+        'Visitor ID',
+        'Full Name',
+        'Designation',
+        'Company Name',
+        'Mobile Number',
+        'Purpose',
+        'Vehicle Number',
+        'Remarks',
+        'Status',
+        'In Time',
+        'Out Time',
+        'Photo Available',
+        'ID Card Available',
+        'Created At',
+      ];
+
+      const rows = filteredVisitors.map((visitor) => [
+        visitor.id,
+        visitor.full_name || '',
+        visitor.designation || '',
+        visitor.company_name || '',
+        visitor.mobile_no || '',
+        visitor.purpose || '',
+        visitor.vehicle_no || '',
+        visitor.remarks || '',
+        visitor.status || '',
+        visitor.in_time || '',
+        visitor.out_time || '',
+        visitor.image_url ? 'Yes' : 'No',
+        visitor.id_card_image_url ? 'Yes' : 'No',
+        visitor.created_at || '',
+      ]);
+
+      const csvContent = [
+        headers.join(','),
+        ...rows.map((row) =>
+          row
+            .map((value) => `"${String(value).replace(/"/g, '""')}"`)
+            .join(','),
+        ),
+      ].join('\n');
+
+      const fileUri =
+        FileSystem.documentDirectory + `visitor_records_${Date.now()}.csv`;
+
+      await FileSystem.writeAsStringAsync(fileUri, csvContent, {
+        encoding: FileSystem.EncodingType.UTF8,
+      });
+
+      await Sharing.shareAsync(fileUri);
+    } catch (error) {
+      console.log(error);
+
+      alert('Failed to export CSV');
+    }
   };
 
   if (loading) {
@@ -287,6 +356,16 @@ export default function VisitorRecordsScreen() {
           <Text variant='titleMedium' style={styles.countText}>
             Visitors Found: {filteredVisitors.length}
           </Text>
+
+          <Button
+            mode='contained'
+            onPress={exportCSV}
+            style={{
+              marginBottom: 15,
+            }}
+          >
+            Export CSV
+          </Button>
 
           <FlatList
             data={filteredVisitors}
