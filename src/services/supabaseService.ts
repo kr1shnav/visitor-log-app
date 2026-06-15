@@ -24,39 +24,57 @@ export const getVisitors = async () => {
   return data;
 };
 
-export const uploadVisitorPhoto = async (imageUri: string) => {
-  const response = await fetch(imageUri);
+export const uploadVisitorPhoto = async (
+  imageUri: string,
+) => {
+  try {
+    const fileName = `visitor-${Date.now()}.jpg`;
 
-  const blob = await response.blob();
+    const response = await fetch(imageUri);
 
-  const fileName = `visitor-${Date.now()}.jpg`;
+    const arrayBuffer =
+      await response.arrayBuffer();
 
-  const { error } = await supabase.storage
-    .from('visitor-photos')
-    .upload(fileName, blob, {
-      contentType: 'image/jpeg',
-    });
+    const { error } =
+      await supabase.storage
+        .from('visitor-photos')
+        .upload(
+          fileName,
+          arrayBuffer,
+          {
+            contentType:
+              'image/jpeg',
+            upsert: true,
+          },
+        );
 
-  if (error) throw error;
+    if (error) {
+      throw error;
+    }
 
-  const { data } = supabase.storage
-    .from('visitor-photos')
-    .getPublicUrl(fileName);
+    const { data } =
+      supabase.storage
+        .from('visitor-photos')
+        .getPublicUrl(fileName);
 
-  return data.publicUrl;
+    return data.publicUrl;
+  } catch (error) {
+    console.log(
+      'PHOTO UPLOAD ERROR:',
+      error,
+    );
+    throw error;
+  }
 };
 
-export const checkoutVisitor = async (
-  id: string
-) => {
-  const { data, error } =
-    await supabase
-      .from('visitors')
-      .update({
-        status: 'CHECKED_OUT',
-        out_time: new Date().toISOString(),
-      })
-      .eq('id', id);
+export const checkoutVisitor = async (id: string) => {
+  const { data, error } = await supabase
+    .from('visitors')
+    .update({
+      status: 'CHECKED_OUT',
+      out_time: new Date().toISOString(),
+    })
+    .eq('id', id);
 
   if (error) throw error;
 

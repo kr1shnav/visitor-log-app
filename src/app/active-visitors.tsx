@@ -29,6 +29,8 @@ export default function ActiveVisitorsScreen() {
     try {
       const data = await getVisitors();
 
+      console.log('VISITORS DATA:', data);
+
       setVisitors(data || []);
     } catch (error) {
       console.log(error);
@@ -36,7 +38,6 @@ export default function ActiveVisitorsScreen() {
       setLoading(false);
     }
   };
-
   const filteredVisitors = visitors.filter((visitor) => {
     const searchText = search.toLowerCase();
 
@@ -53,9 +54,10 @@ export default function ActiveVisitorsScreen() {
           <View>
             <Image
               source={{
-                uri: item.photo_url || 'https://via.placeholder.com/150',
+                uri: item.photo_url,
               }}
               style={styles.image}
+              resizeMode='cover'
             />
 
             {item.id_card_url && (
@@ -64,6 +66,7 @@ export default function ActiveVisitorsScreen() {
                   uri: item.id_card_url,
                 }}
                 style={styles.idImage}
+                resizeMode='cover'
               />
             )}
           </View>
@@ -168,20 +171,23 @@ const styles = StyleSheet.create({
 
   row: {
     flexDirection: 'row',
+    alignItems: 'flex-start',
   },
 
   image: {
-    width: 80,
-    height: 80,
-    borderRadius: 10,
+    width: 90,
+    height: 90,
+    borderRadius: 45,
     marginRight: 15,
+    backgroundColor: '#E5E7EB',
   },
 
   idImage: {
-    width: 80,
-    height: 50,
+    width: 90,
+    height: 55,
     borderRadius: 6,
     marginTop: 8,
+    backgroundColor: '#E5E7EB',
   },
 
   infoContainer: {

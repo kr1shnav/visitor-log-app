@@ -92,7 +92,9 @@ export default function NewVisitorScreen() {
       }
 
       // Upload Visitor Photo
-      const photoUrl = null;
+      const photoUrl = image ? await uploadVisitorPhoto(image) : null;
+
+      const idCardUrl = idImage ? await uploadVisitorPhoto(idImage) : null;
 
       const visitorData = {
         id: Date.now().toString(),
@@ -108,23 +110,18 @@ export default function NewVisitorScreen() {
         status: 'ACTIVE' as const,
       };
 
-      // Save to Supabase
+      // Save to db
       await createVisitor({
         full_name: data.fullName,
-
         designation: data.designation,
-
         company_name: data.companyName,
-
         mobile_no: data.mobileNo,
-
         purpose: data.purpose,
-
         vehicle_no: data.vehicleNo,
-
         remarks: data.remarks,
 
-        photo_url: null,
+        photo_url: photoUrl,
+        id_card_url: idCardUrl,
 
         status: 'ACTIVE',
       });
