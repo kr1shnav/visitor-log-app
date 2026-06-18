@@ -24,45 +24,32 @@ export const getVisitors = async () => {
   return data;
 };
 
-export const uploadVisitorPhoto = async (
-  imageUri: string,
-) => {
+export const uploadVisitorPhoto = async (imageUri: string) => {
   try {
     const fileName = `visitor-${Date.now()}.jpg`;
 
     const response = await fetch(imageUri);
 
-    const arrayBuffer =
-      await response.arrayBuffer();
+    const arrayBuffer = await response.arrayBuffer();
 
-    const { error } =
-      await supabase.storage
-        .from('visitor-photos')
-        .upload(
-          fileName,
-          arrayBuffer,
-          {
-            contentType:
-              'image/jpeg',
-            upsert: true,
-          },
-        );
+    const { error } = await supabase.storage
+      .from('visitor-photos')
+      .upload(fileName, arrayBuffer, {
+        contentType: 'image/jpeg',
+        upsert: true,
+      });
 
     if (error) {
       throw error;
     }
 
-    const { data } =
-      supabase.storage
-        .from('visitor-photos')
-        .getPublicUrl(fileName);
+    const { data } = supabase.storage
+      .from('visitor-photos')
+      .getPublicUrl(fileName);
 
     return data.publicUrl;
   } catch (error) {
-    console.log(
-      'PHOTO UPLOAD ERROR:',
-      error,
-    );
+    console.log('PHOTO UPLOAD ERROR:', error);
     throw error;
   }
 };
@@ -75,6 +62,17 @@ export const checkoutVisitor = async (id: string) => {
       out_time: new Date().toISOString(),
     })
     .eq('id', id);
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const createEquipmentLog = async (equipment: any) => {
+  const { data, error } = await supabase
+    .from('equipment_logs')
+    .insert([equipment])
+    .select();
 
   if (error) throw error;
 
