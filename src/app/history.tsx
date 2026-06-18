@@ -145,7 +145,9 @@ export default function VisitorRecordsScreen() {
         'Designation',
         'Company Name',
         'Mobile Number',
+        'Laptop Bag',
         'Purpose',
+        'Host Name',
         'Vehicle Number',
         'Remarks',
         'Status',
@@ -162,7 +164,9 @@ export default function VisitorRecordsScreen() {
         visitor.designation || '',
         visitor.company_name || '',
         visitor.mobile_no || '',
+        visitor.laptop_bag ? 'Yes' : 'No',
         visitor.purpose || '',
+        visitor.host_name || '',
         visitor.vehicle_no || '',
         visitor.remarks || '',
         visitor.status || '',
@@ -383,7 +387,11 @@ export default function VisitorRecordsScreen() {
 
                   <Text>Vehicle: {item.vehicle_no}</Text>
 
+                  {item.host_name && <Text>Host: {item.host_name}</Text>}
+
                   <Text>Purpose: {item.purpose}</Text>
+
+                  <Text>Laptop Bag: {item.laptop_bag ? 'Yes' : 'No'}</Text>
 
                   <Text>Status: {item.status}</Text>
 

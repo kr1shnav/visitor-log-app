@@ -25,6 +25,7 @@ type FormData = {
   vehicleNo: string;
   remarks: string;
   laptopBag: boolean;
+  hostName: string;
 };
 
 export default function NewVisitorScreen() {
@@ -43,6 +44,7 @@ export default function NewVisitorScreen() {
       mobileNo: '',
       purpose: '',
       vehicleNo: '',
+      hostName: '',
       remarks: '',
       laptopBag: false,
     },
@@ -124,6 +126,7 @@ export default function NewVisitorScreen() {
         mobile_no: data.mobileNo,
         purpose: data.purpose,
         vehicle_no: data.vehicleNo,
+        host_name: data.hostName,
         remarks: data.remarks,
 
         photo_url: photoUrl,
@@ -184,7 +187,7 @@ export default function NewVisitorScreen() {
             }}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                label='Full Name'
+                label='* Full Name'
                 mode='outlined'
                 value={value}
                 style={styles.input}
@@ -203,33 +206,47 @@ export default function NewVisitorScreen() {
           <Controller
             control={control}
             name='designation'
+            rules={{
+              required: 'Designation is required',
+            }}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                label='Designation'
+                label='* Designation'
                 mode='outlined'
-                style={styles.input}
                 value={value}
-                autoCapitalize='words'
                 onChangeText={onChange}
+                style={styles.input}
+                error={!!errors.designation}
               />
             )}
           />
+
+          {errors.designation && (
+            <Text style={{ color: 'red' }}>{errors.designation.message}</Text>
+          )}
 
           {/* Company */}
           <Controller
             control={control}
             name='companyName'
+            rules={{
+              required: 'Company Name is required',
+            }}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                label='Company Name'
+                label='* Company Name'
                 mode='outlined'
-                style={styles.input}
                 value={value}
-                autoCapitalize='words'
                 onChangeText={onChange}
+                style={styles.input}
+                error={!!errors.companyName}
               />
             )}
           />
+
+          {errors.companyName && (
+            <Text style={{ color: 'red' }}>{errors.companyName.message}</Text>
+          )}
 
           {/* Mobile */}
           <Controller
@@ -244,7 +261,7 @@ export default function NewVisitorScreen() {
             }}
             render={({ field: { onChange, value } }) => (
               <TextInput
-                label='Mobile Number'
+                label='* Mobile Number'
                 mode='outlined'
                 keyboardType='numeric'
                 maxLength={10}
@@ -316,6 +333,20 @@ export default function NewVisitorScreen() {
               Laptop Bag
             </Text>
           </View>
+
+          <Controller
+            control={control}
+            name='hostName'
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Host Name'
+                mode='outlined'
+                value={value}
+                onChangeText={onChange}
+                style={styles.input}
+              />
+            )}
+          />
 
           {/* Remarks */}
           <Controller

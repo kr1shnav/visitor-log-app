@@ -76,11 +76,15 @@ export default function ActiveVisitorsScreen() {
 
             <Text>Company: {item.company_name}</Text>
 
+            {item.host_name && <Text>Host: {item.host_name}</Text>}
+
             <Text>Designation: {item.designation}</Text>
 
             <Text>Mobile: {item.mobile_no}</Text>
 
             <Text>Vehicle: {item.vehicle_no}</Text>
+
+            <Text>Laptop Bag: {item.laptop_bag ? 'Yes' : 'No'}</Text>
 
             <Text>Purpose: {item.purpose}</Text>
 
