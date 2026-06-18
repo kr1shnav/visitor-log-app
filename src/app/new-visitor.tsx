@@ -14,6 +14,8 @@ import { useVisitor } from '../context/VisitorContext';
 
 import { createVisitor, uploadVisitorPhoto } from '../services/supabaseService';
 
+import { Checkbox } from 'react-native-paper';
+
 type FormData = {
   fullName: string;
   designation: string;
@@ -22,6 +24,7 @@ type FormData = {
   purpose: string;
   vehicleNo: string;
   remarks: string;
+  laptopBag: boolean;
 };
 
 export default function NewVisitorScreen() {
@@ -29,6 +32,8 @@ export default function NewVisitorScreen() {
     control,
     handleSubmit,
     reset,
+    watch,
+    setValue,
     formState: { errors },
   } = useForm<FormData>({
     defaultValues: {
@@ -39,6 +44,7 @@ export default function NewVisitorScreen() {
       purpose: '',
       vehicleNo: '',
       remarks: '',
+      laptopBag: false,
     },
   });
 
@@ -122,6 +128,8 @@ export default function NewVisitorScreen() {
 
         photo_url: photoUrl,
         id_card_url: idCardUrl,
+
+        laptop_bag: data.laptopBag,
 
         status: 'ACTIVE',
       });
@@ -286,6 +294,28 @@ export default function NewVisitorScreen() {
               />
             )}
           />
+
+          <View
+            style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              marginBottom: 12,
+            }}
+          >
+            <Checkbox
+              status={watch('laptopBag') ? 'checked' : 'unchecked'}
+              onPress={() => setValue('laptopBag', !watch('laptopBag'))}
+            />
+
+            <Text
+              style={{
+                marginLeft: 2,
+                fontSize: 16,
+              }}
+            >
+              Laptop Bag
+            </Text>
+          </View>
 
           {/* Remarks */}
           <Controller
