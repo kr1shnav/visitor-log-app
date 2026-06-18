@@ -9,40 +9,65 @@ import { router } from 'expo-router';
 export default function HomeScreen() {
   return (
     <View style={styles.container}>
-      <Text variant='headlineMedium' style={styles.title}>
+      <Text
+        variant="headlineMedium"
+        style={styles.title}
+      >
         Visitor Log System
       </Text>
 
+      {/* Visitor Module */}
+
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.button}
-        onPress={() => router.push('/new-visitor')}
+        onPress={() =>
+          router.push('/new-visitor')
+        }
       >
         New Visitor
       </Button>
 
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.button}
-        onPress={() => router.push('/active-visitors')}
+        onPress={() =>
+          router.push('/active-visitors')
+        }
       >
         Active Visitors
       </Button>
 
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.button}
-        onPress={() => router.push('/history')}
+        onPress={() =>
+          router.push('/history')
+        }
       >
         Visitor Records
       </Button>
 
+      {/* Equipment Module */}
+
       <Button
-        mode='contained'
+        mode="contained"
         style={styles.button}
-        onPress={() => router.push('/equipment-entry')}
+        onPress={() =>
+          router.push('/equipment-entry')
+        }
       >
         Equipment Register
+      </Button>
+
+      <Button
+        mode="contained"
+        style={styles.button}
+        onPress={() =>
+          router.push('/equipment-records')
+        }
+      >
+        Equipment Records
       </Button>
     </View>
   );

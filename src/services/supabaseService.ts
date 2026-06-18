@@ -78,3 +78,35 @@ export const createEquipmentLog = async (equipment: any) => {
 
   return data;
 };
+
+export const getEquipmentLogs =
+  async () => {
+    const { data, error } =
+      await supabase
+        .from('equipment_logs')
+        .select('*')
+        .order('created_at', {
+          ascending: false,
+        });
+
+    if (error) throw error;
+
+    return data;
+  };
+
+  export const returnEquipment =
+  async (id: string) => {
+    const { data, error } =
+      await supabase
+        .from('equipment_logs')
+        .update({
+          status: 'RETURNED',
+          out_time:
+            new Date().toISOString(),
+        })
+        .eq('id', id);
+
+    if (error) throw error;
+
+    return data;
+  };
