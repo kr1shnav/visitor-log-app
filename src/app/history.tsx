@@ -233,7 +233,7 @@ export default function VisitorRecordsScreen() {
           onChange={(event, date) => {
             setShowDatePicker(false);
 
-            if (date) {
+            if (event.type === 'set' && date) {
               setSelectedDate(date);
             }
           }}

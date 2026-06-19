@@ -59,7 +59,8 @@ export default function EquipmentRecordsScreen() {
 
   const handleSearch = () => {
     if (!selectedDate) {
-      alert('Please select a date');
+      setFilteredEquipment(equipment);
+      setSearchPressed(true);
       return;
     }
 
@@ -95,8 +96,39 @@ export default function EquipmentRecordsScreen() {
   const markReturned = async (id: string) => {
     try {
       await returnEquipment(id);
-      await fetchEquipment();
-      handleSearch();
+
+      const updatedData = await getEquipmentLogs();
+
+      setEquipment(updatedData || []);
+
+      if (selectedDate) {
+        const selectedDateString = selectedDate.toISOString().split('T')[0];
+
+        const results = updatedData.filter((record: any) => {
+          const recordDate = new Date(record.created_at)
+            .toISOString()
+            .split('T')[0];
+
+          const dateMatch = recordDate === selectedDateString;
+
+          const borrowerMatch =
+            !borrowerFilter ||
+            record.borrower_name
+              ?.toLowerCase()
+              .includes(borrowerFilter.toLowerCase());
+
+          const itemMatch =
+            !itemFilter ||
+            record.item_name?.toLowerCase().includes(itemFilter.toLowerCase());
+
+          const statusMatch =
+            statusFilter === 'ALL' || record.status === statusFilter;
+
+          return dateMatch && borrowerMatch && itemMatch && statusMatch;
+        });
+
+        setFilteredEquipment(results);
+      }
     } catch (error) {
       console.log(error);
     }
@@ -186,11 +218,16 @@ export default function EquipmentRecordsScreen() {
           value={selectedDate || new Date()}
           mode='date'
           onChange={(event, date) => {
-            setShowDatePicker(false);
+            if (event.type === 'dismissed') {
+              setShowDatePicker(false);
+              return;
+            }
 
             if (date) {
               setSelectedDate(date);
             }
+
+            setShowDatePicker(false);
           }}
         />
       )}
@@ -248,17 +285,19 @@ export default function EquipmentRecordsScreen() {
         </View>
       ) : (
         <>
+          <Button
+            mode='contained'
+            onPress={exportCSV}
+            style={{
+              marginBottom: 15,
+            }}
+          >
+            Export CSV
+          </Button>
+
           <Text variant='titleMedium' style={styles.count}>
-            <Button
-              mode='contained'
-              onPress={exportCSV}
-              style={{
-                marginBottom: 15,
-              }}
-            >
-              Export CSV
-            </Button>
-            Records Found: {filteredEquipment.length}
+            Records Found:
+            {filteredEquipment.length}
           </Text>
 
           <FlatList
