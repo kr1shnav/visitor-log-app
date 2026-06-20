@@ -393,6 +393,16 @@ export default function VisitorRecordsScreen() {
 
                   <Text>Laptop Bag: {item.laptop_bag ? 'Yes' : 'No'}</Text>
 
+                  <Text>
+                    Logged By:
+                    {item.created_by_name}
+                  </Text>
+
+                  <Text>
+                    Username:
+                    {item.created_by}
+                  </Text>
+
                   <Text>Status: {item.status}</Text>
 
                   <Text>In Time: {formatDateTime(item.in_time)}</Text>

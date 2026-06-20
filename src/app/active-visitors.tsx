@@ -90,6 +90,16 @@ export default function ActiveVisitorsScreen() {
 
             <Text>Status: {item.status}</Text>
 
+            <Text>
+              Logged By:
+              {item.created_by_name}
+            </Text>
+
+            <Text>
+              Username:
+              {item.created_by}
+            </Text>
+
             <Text>In Time: {new Date(item.in_time).toLocaleString()}</Text>
 
             {item.out_time && (

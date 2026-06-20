@@ -8,6 +8,8 @@ import { Controller, useForm } from 'react-hook-form';
 
 import { createEquipmentLog } from '../services/supabaseService';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 interface FormData {
   borrowerName: string;
   phoneNo: string;
@@ -35,6 +37,8 @@ export default function EquipmentEntryScreen() {
   });
 
   const onSubmit = async (data: FormData) => {
+    const user = JSON.parse((await AsyncStorage.getItem('user')) || '{}');
+
     try {
       await createEquipmentLog({
         borrower_name: data.borrowerName,
@@ -50,6 +54,10 @@ export default function EquipmentEntryScreen() {
         remarks: data.remarks,
 
         status: 'OUT',
+
+        created_by: user.username,
+
+        created_by_name: user.full_name,
       });
 
       Alert.alert('Success', 'Equipment entry saved');

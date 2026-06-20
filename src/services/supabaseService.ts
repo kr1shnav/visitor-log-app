@@ -79,34 +79,76 @@ export const createEquipmentLog = async (equipment: any) => {
   return data;
 };
 
-export const getEquipmentLogs =
-  async () => {
-    const { data, error } =
-      await supabase
-        .from('equipment_logs')
-        .select('*')
-        .order('created_at', {
-          ascending: false,
-        });
+export const getEquipmentLogs = async () => {
+  const { data, error } = await supabase
+    .from('equipment_logs')
+    .select('*')
+    .order('created_at', {
+      ascending: false,
+    });
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data;
-  };
+  return data;
+};
 
-  export const returnEquipment =
-  async (id: string) => {
-    const { data, error } =
-      await supabase
-        .from('equipment_logs')
-        .update({
-          status: 'RETURNED',
-          out_time:
-            new Date().toISOString(),
-        })
-        .eq('id', id);
+export const returnEquipment = async (id: string) => {
+  const { data, error } = await supabase
+    .from('equipment_logs')
+    .update({
+      status: 'RETURNED',
+      out_time: new Date().toISOString(),
+    })
+    .eq('id', id);
 
-    if (error) throw error;
+  if (error) throw error;
 
-    return data;
-  };
+  return data;
+};
+
+export const loginUser = async (username: string, password: string) => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .eq('username', username)
+    .eq('password', password)
+    .single();
+
+  if (error) return null;
+
+  return data;
+};
+
+export const getUsers = async () => {
+  const { data, error } = await supabase
+    .from('users')
+    .select('*')
+    .order('created_at', {
+      ascending: false,
+    });
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const createUser = async (user: any) => {
+  const { data, error } = await supabase.from('users').insert([user]).select();
+
+  if (error) throw error;
+
+  return data;
+};
+
+export const resetPassword = async (userId: string, password: string) => {
+  const { data, error } = await supabase
+    .from('users')
+    .update({
+      password,
+    })
+    .eq('id', userId);
+
+  if (error) throw error;
+
+  return data;
+};

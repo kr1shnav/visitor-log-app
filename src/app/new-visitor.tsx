@@ -16,6 +16,8 @@ import { createVisitor, uploadVisitorPhoto } from '../services/supabaseService';
 
 import { Checkbox } from 'react-native-paper';
 
+import AsyncStorage from '@react-native-async-storage/async-storage';
+
 type FormData = {
   fullName: string;
   designation: string;
@@ -118,23 +120,33 @@ export default function NewVisitorScreen() {
         status: 'ACTIVE' as const,
       };
 
+      const user = JSON.parse((await AsyncStorage.getItem('user')) || '{}');
+
       // Save to db
       await createVisitor({
         full_name: data.fullName,
+
         designation: data.designation,
+
         company_name: data.companyName,
+
         mobile_no: data.mobileNo,
+
         purpose: data.purpose,
+
         vehicle_no: data.vehicleNo,
-        host_name: data.hostName,
+
         remarks: data.remarks,
 
         photo_url: photoUrl,
+
         id_card_url: idCardUrl,
 
-        laptop_bag: data.laptopBag,
-
         status: 'ACTIVE',
+
+        created_by: user.username,
+
+        created_by_name: user.full_name,
       });
 
       // Update local Context
@@ -433,7 +445,7 @@ const styles = StyleSheet.create({
   container: {
     flexGrow: 1,
     padding: 16,
-    backgroundColor: '#F8FAFC',
+    backgroundColor: '#e5f2fe',
   },
 
   card: {
