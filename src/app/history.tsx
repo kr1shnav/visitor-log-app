@@ -2,7 +2,17 @@ import React, { useEffect, useState } from 'react';
 
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Card, Text, TextInput, Button, Switch } from 'react-native-paper';
+import {
+  Card,
+  Text,
+  TextInput,
+  Button,
+  Switch,
+  Divider,
+  Chip,
+} from 'react-native-paper';
+
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -215,15 +225,19 @@ export default function VisitorRecordsScreen() {
         Visitor Records
       </Text>
 
-      <Button
+      <TextInput
         mode='outlined'
-        onPress={() => setShowDatePicker(true)}
+        label='Select Date'
+        value={selectedDate ? selectedDate.toLocaleDateString() : ''}
+        editable={false}
         style={styles.searchBar}
-      >
-        {selectedDate
-          ? `Date: ${selectedDate.toLocaleDateString()}`
-          : 'Select Date *'}
-      </Button>
+        right={
+          <TextInput.Icon
+            icon='calendar'
+            onPress={() => setShowDatePicker(true)}
+          />
+        }
+      />
 
       {showDatePicker && (
         <DateTimePicker
@@ -353,7 +367,17 @@ export default function VisitorRecordsScreen() {
 
       {!searchPressed ? (
         <View style={styles.emptyContainer}>
-          <Text>Select a date and press Search Records</Text>
+          <MaterialCommunityIcons
+            name='file-search-outline'
+            size={80}
+            color='#94A3B8'
+          />
+
+          <Text style={styles.emptyTitle}>Search Visitor Records</Text>
+
+          <Text style={styles.emptySubtitle}>
+            Select filters and tap Search Records
+          </Text>
         </View>
       ) : (
         <>
@@ -377,9 +401,23 @@ export default function VisitorRecordsScreen() {
             renderItem={({ item }) => (
               <Card style={styles.card}>
                 <Card.Content>
-                  <Text variant='titleMedium'>{item.full_name}</Text>
+                  <View style={styles.cardHeader}>
+                    <View>
+                      <Text variant='titleMedium'>{item.full_name}</Text>
 
-                  <Text>Company: {item.company_name}</Text>
+                      <Text style={styles.companyText}>
+                        {item.company_name}
+                      </Text>
+                    </View>
+
+                    <Chip mode='outlined'>{item.status}</Chip>
+                  </View>
+
+                  <Divider
+                    style={{
+                      marginVertical: 10,
+                    }}
+                  />
 
                   <Text>Designation: {item.designation}</Text>
 
@@ -393,17 +431,9 @@ export default function VisitorRecordsScreen() {
 
                   <Text>Laptop Bag: {item.laptop_bag ? 'Yes' : 'No'}</Text>
 
-                  <Text>
-                    Logged By:
-                    {item.created_by_name}
-                  </Text>
+                  <Text>Logged By: {item.created_by_name}</Text>
 
-                  <Text>
-                    Username:
-                    {item.created_by}
-                  </Text>
-
-                  <Text>Status: {item.status}</Text>
+                  <Text>Username: {item.created_by}</Text>
 
                   <Text>In Time: {formatDateTime(item.in_time)}</Text>
 
@@ -457,13 +487,35 @@ const styles = StyleSheet.create({
   },
 
   card: {
-    marginBottom: 12,
-    borderRadius: 12,
+    marginBottom: 15,
+    borderRadius: 18,
+    elevation: 3,
   },
 
   emptyContainer: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+  emptyTitle: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+
+  emptySubtitle: {
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  companyText: {
+    color: '#64748B',
   },
 });

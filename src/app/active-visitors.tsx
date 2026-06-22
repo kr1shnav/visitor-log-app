@@ -2,20 +2,45 @@ import React, { useEffect, useState } from 'react';
 
 import { FlatList, Image, StyleSheet, View } from 'react-native';
 
-import { Button, Card, Chip, Text, TextInput } from 'react-native-paper';
+import {
+  Button,
+  Card,
+  Chip,
+  Text,
+  Divider,
+  Avatar,
+  Searchbar,
+} from 'react-native-paper';
+
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 import { getVisitors, checkoutVisitor } from '../services/supabaseService';
 
 export default function ActiveVisitorsScreen() {
   const [visitors, setVisitors] = useState<any[]>([]);
-
   const [loading, setLoading] = useState(true);
-
-  const [search, setSearch] = useState('');
+  const [searchQuery, setSearchQuery] = useState('');
 
   useEffect(() => {
     fetchVisitors();
   }, []);
+
+  const fetchVisitors = async () => {
+    try {
+      const data = await getVisitors();
+
+      const activeVisitors = (data || []).filter(
+        (v: any) => v.status === 'ACTIVE',
+      );
+
+      setVisitors(activeVisitors);
+    } catch (error) {
+      console.log(error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const handleCheckout = async (id: string) => {
     try {
       await checkoutVisitor(id);
@@ -25,115 +50,111 @@ export default function ActiveVisitorsScreen() {
       console.log(error);
     }
   };
-  const fetchVisitors = async () => {
-    try {
-      const data = await getVisitors();
 
-      console.log('VISITORS DATA:', data);
-
-      setVisitors(data || []);
-    } catch (error) {
-      console.log(error);
-    } finally {
-      setLoading(false);
-    }
-  };
-  const filteredVisitors = visitors.filter((visitor) => {
-    const searchText = search.toLowerCase();
+  const filteredVisitors = visitors.filter((item) => {
+    const query = searchQuery.toLowerCase();
 
     return (
-      visitor.full_name?.toLowerCase().includes(searchText) ||
-      visitor.mobile_no?.includes(searchText)
+      item.full_name?.toLowerCase().includes(query) ||
+      item.mobile_no?.includes(query)
     );
   });
 
   const renderVisitor = ({ item }: { item: any }) => (
     <Card style={styles.card}>
       <Card.Content>
-        <View style={styles.row}>
-          <View>
-            <Image
-              source={{
-                uri: item.photo_url,
-              }}
-              style={styles.image}
-              resizeMode='cover'
-            />
-
-            {item.id_card_url && (
+        <View style={styles.cardHeader}>
+          <View style={styles.profileSection}>
+            {item.photo_url ? (
               <Image
                 source={{
-                  uri: item.id_card_url,
+                  uri: item.photo_url,
                 }}
-                style={styles.idImage}
-                resizeMode='cover'
+                style={styles.image}
               />
-            )}
-          </View>
-
-          <View style={styles.infoContainer}>
-            <Text variant='titleMedium'>{item.full_name}</Text>
-
-            <Text>Company: {item.company_name}</Text>
-
-            {item.host_name && <Text>Host: {item.host_name}</Text>}
-
-            <Text>Designation: {item.designation}</Text>
-
-            <Text>Mobile: {item.mobile_no}</Text>
-
-            <Text>Vehicle: {item.vehicle_no}</Text>
-
-            <Text>Laptop Bag: {item.laptop_bag ? 'Yes' : 'No'}</Text>
-
-            <Text>Purpose: {item.purpose}</Text>
-
-            <Text>Status: {item.status}</Text>
-
-            <Text>
-              Logged By:
-              {item.created_by_name}
-            </Text>
-
-            <Text>
-              Username:
-              {item.created_by}
-            </Text>
-
-            <Text>In Time: {new Date(item.in_time).toLocaleString()}</Text>
-
-            {item.out_time && (
-              <Text>Out Time: {new Date(item.out_time).toLocaleString()}</Text>
+            ) : (
+              <Avatar.Icon size={60} icon='account' />
             )}
 
-            <Chip
-              style={
-                item.status === 'ACTIVE'
-                  ? styles.activeChip
-                  : styles.checkoutChip
-              }
-            >
-              {item.status}
-            </Chip>
+            <View style={styles.nameSection}>
+              <Text variant='titleMedium'>{item.full_name}</Text>
+
+              <Text style={styles.companyText}>{item.company_name}</Text>
+            </View>
           </View>
+
+          <Chip icon='account-check' mode='outlined'>
+            ACTIVE
+          </Chip>
         </View>
 
-        {item.status === 'ACTIVE' && (
-          <Button
-            mode='contained'
-            style={styles.checkoutButton}
-            onPress={() => handleCheckout(item.id)}
-          >
-            CHECK OUT
-          </Button>
+        <Divider
+          style={{
+            marginVertical: 12,
+          }}
+        />
+
+        <Text>Designation: {item.designation}</Text>
+
+        <Text>Mobile: {item.mobile_no}</Text>
+
+        <Text>Purpose: {item.purpose}</Text>
+
+        {item.host_name && <Text>Host: {item.host_name}</Text>}
+
+        {item.vehicle_no && <Text>Vehicle: {item.vehicle_no}</Text>}
+
+        <Text>
+          Laptop Bag:
+          {item.laptop_bag ? ' Yes' : ' No'}
+        </Text>
+
+        <Text>Logged By: {item.created_by_name}</Text>
+
+        <Text>Username: {item.created_by}</Text>
+
+        <Text>In Time: {new Date(item.in_time).toLocaleString()}</Text>
+
+        {item.id_card_url && (
+          <>
+            <Divider
+              style={{
+                marginVertical: 10,
+              }}
+            />
+
+            <Text
+              style={{
+                marginBottom: 8,
+              }}
+            >
+              ID Card
+            </Text>
+
+            <Image
+              source={{
+                uri: item.id_card_url,
+              }}
+              style={styles.idImage}
+            />
+          </>
         )}
+
+        <Button
+          mode='contained'
+          icon='logout'
+          style={styles.checkoutBtn}
+          onPress={() => handleCheckout(item.id)}
+        >
+          Check Out Visitor
+        </Button>
       </Card.Content>
     </Card>
   );
 
   if (loading) {
     return (
-      <View style={styles.emptyContainer}>
+      <View style={styles.emptyState}>
         <Text>Loading visitors...</Text>
       </View>
     );
@@ -141,17 +162,26 @@ export default function ActiveVisitorsScreen() {
 
   return (
     <View style={styles.container}>
-      <TextInput
-        mode='outlined'
-        label='Search by Name or Mobile'
-        value={search}
-        onChangeText={setSearch}
+      <Searchbar
+        placeholder='Search by Name or Mobile'
+        value={searchQuery}
+        onChangeText={setSearchQuery}
         style={styles.searchBar}
       />
 
       {filteredVisitors.length === 0 ? (
-        <View style={styles.emptyContainer}>
-          <Text variant='titleMedium'>No Visitors Found</Text>
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons
+            name='account-off-outline'
+            size={80}
+            color='#94A3B8'
+          />
+
+          <Text style={styles.emptyTitle}>No Active Visitors</Text>
+
+          <Text style={styles.emptySubtitle}>
+            Visitors currently inside the premises will appear here.
+          </Text>
         </View>
       ) : (
         <FlatList
@@ -175,56 +205,69 @@ const styles = StyleSheet.create({
   },
 
   searchBar: {
-    marginBottom: 16,
+    marginBottom: 20,
   },
 
   card: {
-    marginBottom: 16,
-    borderRadius: 12,
+    marginBottom: 15,
+    borderRadius: 18,
+    elevation: 3,
   },
 
-  row: {
+  cardHeader: {
     flexDirection: 'row',
+    justifyContent: 'space-between',
     alignItems: 'flex-start',
   },
 
+  profileSection: {
+    flexDirection: 'row',
+    flex: 1,
+  },
+
   image: {
-    width: 90,
-    height: 90,
-    borderRadius: 45,
-    marginRight: 15,
+    width: 60,
+    height: 60,
+    borderRadius: 30,
     backgroundColor: '#E5E7EB',
+  },
+
+  nameSection: {
+    marginLeft: 12,
+    flex: 1,
+  },
+
+  companyText: {
+    color: '#64748B',
   },
 
   idImage: {
-    width: 90,
-    height: 55,
-    borderRadius: 6,
-    marginTop: 8,
-    backgroundColor: '#E5E7EB',
+    width: '100%',
+    height: 150,
+    borderRadius: 12,
   },
 
-  infoContainer: {
-    flex: 1,
-  },
-
-  activeChip: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-
-  checkoutChip: {
-    marginTop: 10,
-    alignSelf: 'flex-start',
-  },
-
-  checkoutButton: {
+  checkoutBtn: {
     marginTop: 20,
+    borderRadius: 12,
   },
 
-  emptyContainer: {
+  emptyState: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+    marginTop: 80,
+  },
+
+  emptyTitle: {
+    marginTop: 15,
+    fontSize: 20,
+    fontWeight: '600',
+  },
+
+  emptySubtitle: {
+    marginTop: 10,
+    color: '#64748B',
+    textAlign: 'center',
   },
 });

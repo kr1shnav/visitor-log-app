@@ -1,54 +1,57 @@
-import { Stack } from "expo-router";
+import { Stack } from 'expo-router';
 
-import { VisitorProvider } from "../context/VisitorContext";
+import { PaperProvider } from 'react-native-paper';
+
+import { VisitorProvider } from '../context/VisitorContext';
 
 export default function Layout() {
   return (
-    <VisitorProvider>
-      <Stack
-        screenOptions={{
-          headerStyle: {
-            backgroundColor: "#002b55",
-          },
+    <PaperProvider>
+      <VisitorProvider>
+        <Stack
+          screenOptions={{
+            headerStyle: {
+              backgroundColor: '#002b55',
+            },
 
-          headerTintColor: "#ffffff",
+            headerTintColor: '#ffffff',
 
-          contentStyle: {
-            backgroundColor: "#8dc8ff",
-          },
+            contentStyle: {
+              backgroundColor: '#ffffff',
+            },
 
-          headerTitleAlign: "center",
-        }}
-      >
-        <Stack.Screen
-          name="index"
-          options={{
-            title: "Home",
+            headerTitleAlign: 'center',
           }}
-        />
+        >
+          <Stack.Screen
+            name='index'
+            options={{
+              title: 'Home',
+            }}
+          />
 
-        <Stack.Screen
-          name="new-visitor"
-          options={{
-            title: "New Visitor",
-          }}
-        />
+          <Stack.Screen
+            name='new-visitor'
+            options={{
+              title: 'New Visitor',
+            }}
+          />
 
-        <Stack.Screen
-          name="active-visitors"
-          options={{
-            title: "Active Visitors",
-          }}
-        />
+          <Stack.Screen
+            name='active-visitors'
+            options={{
+              title: 'Active Visitors',
+            }}
+          />
 
-        <Stack.Screen
-          name="reports"
-          options={{
-            title: "Reports",
-          }}
-        />
-      </Stack>
-      
-    </VisitorProvider>
+          <Stack.Screen
+            name='reports'
+            options={{
+              title: 'Reports',
+            }}
+          />
+        </Stack>
+      </VisitorProvider>
+    </PaperProvider>
   );
 }

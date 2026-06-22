@@ -2,7 +2,16 @@ import React, { useEffect, useState } from 'react';
 
 import { FlatList, StyleSheet, View } from 'react-native';
 
-import { Card, Text, TextInput, Button } from 'react-native-paper';
+import {
+  Card,
+  Text,
+  TextInput,
+  Button,
+  Divider,
+  Chip,
+} from 'react-native-paper';
+
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 
 import DateTimePicker from '@react-native-community/datetimepicker';
 
@@ -203,15 +212,19 @@ export default function EquipmentRecordsScreen() {
         Equipment Records
       </Text>
 
-      <Button
+      <TextInput
         mode='outlined'
-        onPress={() => setShowDatePicker(true)}
+        label='Select Date'
+        value={selectedDate ? selectedDate.toISOString().split('T')[0] : ''}
+        editable={false}
+        right={
+          <TextInput.Icon
+            icon='calendar'
+            onPress={() => setShowDatePicker(true)}
+          />
+        }
         style={styles.searchBar}
-      >
-        {selectedDate
-          ? selectedDate.toISOString().split('T')[0]
-          : 'Select Date *'}
-      </Button>
+      />
 
       {showDatePicker && (
         <DateTimePicker
@@ -280,8 +293,14 @@ export default function EquipmentRecordsScreen() {
       </Button>
 
       {!searchPressed ? (
-        <View style={styles.center}>
-          <Text>Select a date and search</Text>
+        <View style={styles.emptyState}>
+          <MaterialCommunityIcons name='laptop-off' size={80} color='#94A3B8' />
+
+          <Text style={styles.emptyTitle}>Search Equipment Records</Text>
+
+          <Text style={styles.emptySubtitle}>
+            Select filters and tap Search Records
+          </Text>
         </View>
       ) : (
         <>
@@ -306,27 +325,25 @@ export default function EquipmentRecordsScreen() {
             renderItem={({ item }) => (
               <Card style={styles.card}>
                 <Card.Content>
-                  <Text variant='titleMedium'>{item.item_name}</Text>
+                  <View style={styles.cardHeader}>
+                    <View>
+                      <Text variant='titleMedium'>{item.item_name}</Text>
+
+                      <Text style={styles.serialText}>
+                        Serial No: {item.serial_no || 'N/A'}
+                      </Text>
+                    </View>
+
+                    <Chip mode='outlined'>{item.status}</Chip>
+                  </View>
+
+                  <Divider style={{ marginVertical: 10 }} />
 
                   <Text>Borrower: {item.borrower_name}</Text>
 
                   <Text>Phone: {item.phone_no}</Text>
 
-                  <Text>Serial No: {item.serial_no}</Text>
-
                   <Text>Quantity: {item.quantity}</Text>
-
-                  <Text>
-                    Logged By:
-                    {item.created_by_name}
-                  </Text>
-
-                  <Text>
-                    Username:
-                    {item.created_by}
-                  </Text>
-
-                  <Text>Status: {item.status}</Text>
 
                   <Text>In Time: {formatDateTime(item.in_time)}</Text>
 
@@ -339,12 +356,11 @@ export default function EquipmentRecordsScreen() {
                   {item.status === 'OUT' && (
                     <Button
                       mode='contained'
-                      style={{
-                        marginTop: 10,
-                      }}
+                      icon='keyboard-return'
+                      style={styles.returnBtn}
                       onPress={() => markReturned(item.id)}
                     >
-                      MARK RETURNED
+                      Mark Returned
                     </Button>
                   )}
                 </Card.Content>
@@ -388,14 +404,50 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontWeight: 'bold',
   },
-
-  card: {
-    marginBottom: 12,
-  },
-
+  
   center: {
     flex: 1,
     justifyContent: 'center',
     alignItems: 'center',
+  },
+
+  emptyState: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+    marginTop: 60,
+  },
+
+  emptyTitle: {
+    marginTop: 15,
+    fontSize: 18,
+    fontWeight: '600',
+  },
+
+  emptySubtitle: {
+    color: '#64748B',
+    textAlign: 'center',
+    marginTop: 10,
+  },
+
+  cardHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+  },
+
+  serialText: {
+    color: '#64748B',
+  },
+
+  returnBtn: {
+    marginTop: 20,
+    borderRadius: 12,
+  },
+
+  card: {
+    marginBottom: 15,
+    borderRadius: 18,
+    elevation: 3,
   },
 });

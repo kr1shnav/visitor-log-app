@@ -1,19 +1,25 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useCallback, useEffect } from 'react';
 
-import { View, StyleSheet } from 'react-native';
+import { View, StyleSheet, ScrollView } from 'react-native';
 
-import { Button, Text, Card } from 'react-native-paper';
-
-import { router } from 'expo-router';
-
-import { getVisitors, getEquipmentLogs } from '../services/supabaseService';
+import { Button, Text } from 'react-native-paper';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
+import { router } from 'expo-router';
+
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+
+import { getVisitors, getEquipmentLogs } from '../services/supabaseService';
+
+import MetricCard from '../components/MetricCard';
+
+import NavTile from '../components/NavTile';
+
+import { COLORS } from '../constants/theme';
+
 export default function HomeScreen() {
   const [activeVisitors, setActiveVisitors] = useState(0);
-
-  const [user, setUser] = useState<any>(null);
 
   const [todaysVisitors, setTodaysVisitors] = useState(0);
 
@@ -21,34 +27,23 @@ export default function HomeScreen() {
 
   const [equipmentOut, setEquipmentOut] = useState(0);
 
-  const logout = async () => {
-    await AsyncStorage.removeItem('user');
+  const [user, setUser] = useState<any>(null);
 
-    router.replace('/login');
-
-    <Button mode='outlined' style={styles.button} onPress={logout}>
-      Logout
-    </Button>;
-  };
+  useEffect(() => {
+    fetchDashboard();
+    checkLogin();
+  }, []);
 
   const checkLogin = async () => {
     const storedUser = await AsyncStorage.getItem('user');
 
     if (!storedUser) {
-      router.replace('/login');
+      router.replace('/login' as any);
       return;
     }
 
     setUser(JSON.parse(storedUser));
   };
-
-  useEffect(() => {
-    checkLogin();
-  }, []);
-
-  useEffect(() => {
-    fetchDashboard();
-  }, []);
 
   const fetchDashboard = async () => {
     try {
@@ -56,181 +51,202 @@ export default function HomeScreen() {
 
       const equipment = await getEquipmentLogs();
 
-      const today = new Date();
+      const today = new Date().toISOString().split('T')[0];
 
       const active = visitors.filter((v: any) => v.status === 'ACTIVE').length;
 
-      const todayCount = visitors.filter((v: any) => {
-        const created = new Date(v.created_at);
+      const todayCount = visitors.filter(
+        (v: any) => v.created_at?.split('T')[0] === today,
+      ).length;
 
-        return (
-          created.getDate() === today.getDate() &&
-          created.getMonth() === today.getMonth() &&
-          created.getFullYear() === today.getFullYear()
-        );
-      }).length;
-
-      const checkedOut = visitors.filter((v: any) => {
-        if (v.status !== 'CHECKED_OUT' || !v.out_time) {
-          return false;
-        }
-
-        const outDate = new Date(v.out_time);
-
-        return (
-          outDate.getDate() === today.getDate() &&
-          outDate.getMonth() === today.getMonth() &&
-          outDate.getFullYear() === today.getFullYear()
-        );
-      }).length;
+      const checkedOut = visitors.filter(
+        (v: any) =>
+          v.status === 'CHECKED_OUT' && v.out_time?.split('T')[0] === today,
+      ).length;
 
       const equipmentCount = equipment.filter(
         (e: any) => e.status === 'OUT',
       ).length;
 
-      console.log({
-        active,
-        todayCount,
-        checkedOut,
-        equipmentCount,
-      });
-
       setActiveVisitors(active);
+
       setTodaysVisitors(todayCount);
+
       setCheckedOutToday(checkedOut);
+
       setEquipmentOut(equipmentCount);
     } catch (error) {
-      console.log('Dashboard Error:', error);
+      console.log(error);
     }
   };
 
+  const logout = async () => {
+    await AsyncStorage.removeItem('user');
+
+    router.replace('/login' as any);
+  };
+
   return (
-    <View style={styles.container}>
-      <Text variant='headlineMedium' style={styles.title}>
-        Visitor Log System
-      </Text>
+    <ScrollView style={styles.container} showsVerticalScrollIndicator={false}>
+      <View style={styles.header}>
+        <MaterialCommunityIcons
+          name='shield-account'
+          size={34}
+          color={COLORS.primary}
+        />
 
-      <View style={styles.dashboardRow}>
-        <Card style={styles.dashboardCard}>
-          <Card.Content>
-            <Text>Active Visitors</Text>
+        <View>
+          <Text style={styles.headerTitle}>Visitor Log System</Text>
 
-            <Text variant='headlineSmall'>{activeVisitors}</Text>
-          </Card.Content>
-        </Card>
-
-        <Card style={styles.dashboardCard}>
-          <Card.Content>
-            <Text>Today's Visitors</Text>
-
-            <Text variant='headlineSmall'>{todaysVisitors}</Text>
-          </Card.Content>
-        </Card>
+          {user && (
+            <Text style={styles.userText}>Welcome, {user.full_name}</Text>
+          )}
+        </View>
       </View>
 
-      <View style={styles.dashboardRow}>
-        <Card style={styles.dashboardCard}>
-          <Card.Content>
-            <Text>Checked Out Today</Text>
+      <View style={styles.metricsGrid}>
+        <MetricCard
+          icon='account-group-outline'
+          color='#2563EB'
+          label='Active Visitors'
+          value={activeVisitors}
+        />
 
-            <Text variant='headlineSmall'>{checkedOutToday}</Text>
-          </Card.Content>
-        </Card>
+        <MetricCard
+          icon='calendar-today'
+          color='#059669'
+          label="Today's Visitors"
+          value={todaysVisitors}
+        />
 
-        <Card style={styles.dashboardCard}>
-          <Card.Content>
-            <Text>Equipment Out</Text>
+        <MetricCard
+          icon='logout'
+          color='#D97706'
+          label='Checked Out'
+          value={checkedOutToday}
+        />
 
-            <Text variant='headlineSmall'>{equipmentOut}</Text>
-          </Card.Content>
-        </Card>
+        <MetricCard
+          icon='laptop'
+          color='#7C3AED'
+          label='Equipment Out'
+          value={equipmentOut}
+        />
       </View>
 
-      <Button mode='outlined' style={styles.button} onPress={fetchDashboard}>
-        Refresh Dashboard
-      </Button>
+      <View style={styles.grid}>
+        <NavTile
+          icon='account-plus-outline'
+          label='New Visitor'
+          route='/new-visitor'
+        />
 
-      <Button
-        mode='contained'
-        style={styles.button}
-        onPress={() => router.push('/new-visitor')}
-      >
-        New Visitor
-      </Button>
+        <NavTile
+          icon='account-clock-outline'
+          label='Active'
+          route='/active-visitors'
+        />
 
-      <Button
-        mode='contained'
-        style={styles.button}
-        onPress={() => router.push('/active-visitors')}
-      >
-        Active Visitors
-      </Button>
+        <NavTile icon='history' label='Records' route='/history' />
 
-      <Button
-        mode='contained'
-        style={styles.button}
-        onPress={() => router.push('/history')}
-      >
-        Visitor Records
-      </Button>
+        <NavTile
+          icon='laptop-account'
+          label='Equipment'
+          route='/equipment-entry'
+        />
 
-      <Button
-        mode='contained'
-        style={styles.button}
-        onPress={() => router.push('/equipment-entry')}
-      >
-        Equipment Register
-      </Button>
+        <NavTile
+          icon='clipboard-list-outline'
+          label='Equip Logs'
+          route='/equipment-records'
+        />
 
-      <Button
-        mode='contained'
-        style={styles.button}
-        onPress={() => router.push('/equipment-records')}
-      >
-        Equipment Records
-      </Button>
+        {user?.role === 'ADMIN' && (
+          <NavTile
+            icon='account-cog-outline'
+            label='Users'
+            route='/user-management'
+          />
+        )}
+      </View>
 
-      {user?.role === 'ADMIN' && (
-        <Button
-          mode='contained'
-          style={styles.button}
-          onPress={() => router.push('/user-management')}
-        >
-          User Management
+      <View style={styles.footerActions}>
+        <Button mode='text' onPress={fetchDashboard}>
+          Refresh Dashboard
         </Button>
-      )}
 
-      <Button mode='outlined' onPress={logout}>
-        Logout
-      </Button>
-    </View>
+        <Button mode='text' onPress={logout} textColor='red'>
+          Logout
+        </Button>
+      </View>
+    </ScrollView>
   );
 }
 
 const styles = StyleSheet.create({
-  dashboardRow: {
-    flexDirection: 'row',
-    justifyContent: 'space-between',
-    marginBottom: 12,
-  },
-
-  dashboardCard: {
-    width: '48%',
-  },
-
   container: {
     flex: 1,
-    padding: 20,
-    backgroundColor: '#e5f2fe',
+
+    backgroundColor: COLORS.background,
+
+    padding: 16,
   },
 
-  title: {
-    marginBottom: 20,
-    textAlign: 'center',
-    fontWeight: 'bold',
+  header: {
+    flexDirection: 'row',
+
+    alignItems: 'center',
+
+    marginTop: 20,
+
+    marginBottom: 30,
   },
 
-  button: {
-    marginBottom: 12,
+  headerTitle: {
+    fontSize: 24,
+
+    fontWeight: '700',
+
+    color: COLORS.text,
+
+    marginLeft: 12,
+  },
+
+  userText: {
+    marginLeft: 12,
+
+    color: COLORS.textMuted,
+
+    marginTop: 4,
+  },
+
+  metricsGrid: {
+    flexDirection: 'row',
+
+    flexWrap: 'wrap',
+
+    justifyContent: 'space-between',
+
+    gap: 14,
+
+    marginBottom: 30,
+  },
+
+  grid: {
+    flexDirection: 'row',
+
+    flexWrap: 'wrap',
+
+    justifyContent: 'space-between',
+
+    gap: 14,
+  },
+
+  footerActions: {
+    marginTop: 25,
+
+    flexDirection: 'row',
+
+    justifyContent: 'space-between',
   },
 });
