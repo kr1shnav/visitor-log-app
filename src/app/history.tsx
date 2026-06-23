@@ -180,11 +180,11 @@ export default function VisitorRecordsScreen() {
         visitor.vehicle_no || '',
         visitor.remarks || '',
         visitor.status || '',
-        visitor.in_time || '',
-        visitor.out_time || '',
+        formatDateTime(visitor.in_time),
+        visitor.out_time ? formatDateTime(visitor.out_time) : '',
         visitor.image_url ? 'Yes' : 'No',
         visitor.id_card_image_url ? 'Yes' : 'No',
-        visitor.created_at || '',
+        formatDateTime(visitor.created_at),
       ]);
 
       const csvContent = [

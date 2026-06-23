@@ -169,8 +169,8 @@ export default function EquipmentRecordsScreen() {
         item.serial_no || '',
         item.quantity || '',
         item.status || '',
-        item.in_time || '',
-        item.out_time || '',
+        formatDateTime(item.in_time),
+        item.out_time ? formatDateTime(item.out_time) : '',
         item.remarks || '',
       ]);
 
@@ -404,7 +404,7 @@ const styles = StyleSheet.create({
     marginBottom: 12,
     fontWeight: 'bold',
   },
-  
+
   center: {
     flex: 1,
     justifyContent: 'center',
