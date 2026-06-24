@@ -9,6 +9,7 @@ import {
   Button,
   Divider,
   Chip,
+  Switch,
 } from 'react-native-paper';
 
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
@@ -25,6 +26,8 @@ export default function EquipmentRecordsScreen() {
   const [equipment, setEquipment] = useState<any[]>([]);
   const [filteredEquipment, setFilteredEquipment] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
+
+  const [showOutstandingOnly, setShowOutstandingOnly] = useState(false);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
 
@@ -76,6 +79,7 @@ export default function EquipmentRecordsScreen() {
     const selectedDateString = selectedDate.toISOString().split('T')[0];
 
     const results = equipment.filter((record) => {
+      const outstandingMatch = !showOutstandingOnly || record.status === 'OUT';
       const recordDate = new Date(record.created_at)
         .toISOString()
         .split('T')[0];
@@ -95,7 +99,13 @@ export default function EquipmentRecordsScreen() {
       const statusMatch =
         statusFilter === 'ALL' || record.status === statusFilter;
 
-      return dateMatch && borrowerMatch && itemMatch && statusMatch;
+      return (
+        dateMatch &&
+        borrowerMatch &&
+        itemMatch &&
+        statusMatch &&
+        outstandingMatch
+      );
     });
 
     setFilteredEquipment(results);
@@ -110,10 +120,13 @@ export default function EquipmentRecordsScreen() {
 
       setEquipment(updatedData || []);
 
+      // Reapply all current filters
+      let results = updatedData;
+
       if (selectedDate) {
         const selectedDateString = selectedDate.toISOString().split('T')[0];
 
-        const results = updatedData.filter((record: any) => {
+        results = results.filter((record: any) => {
           const recordDate = new Date(record.created_at)
             .toISOString()
             .split('T')[0];
@@ -133,13 +146,46 @@ export default function EquipmentRecordsScreen() {
           const statusMatch =
             statusFilter === 'ALL' || record.status === statusFilter;
 
-          return dateMatch && borrowerMatch && itemMatch && statusMatch;
-        });
+          const outstandingMatch =
+            !showOutstandingOnly || record.status === 'OUT';
 
-        setFilteredEquipment(results);
+          return (
+            dateMatch &&
+            borrowerMatch &&
+            itemMatch &&
+            statusMatch &&
+            outstandingMatch
+          );
+        });
+      } else {
+        results = updatedData.filter((record: any) => {
+          const borrowerMatch =
+            !borrowerFilter ||
+            record.borrower_name
+              ?.toLowerCase()
+              .includes(borrowerFilter.toLowerCase());
+
+          const itemMatch =
+            !itemFilter ||
+            record.item_name?.toLowerCase().includes(itemFilter.toLowerCase());
+
+          const statusMatch =
+            statusFilter === 'ALL' || record.status === statusFilter;
+
+          const outstandingMatch =
+            !showOutstandingOnly || record.status === 'OUT';
+
+          return borrowerMatch && itemMatch && statusMatch && outstandingMatch;
+        });
       }
+
+      setFilteredEquipment(results);
+
+      alert('Equipment marked as returned');
     } catch (error) {
       console.log(error);
+
+      alert('Failed to update equipment');
     }
   };
 
@@ -283,6 +329,21 @@ export default function EquipmentRecordsScreen() {
           RETURNED
         </Button>
       </View>
+
+      <Button
+        mode='contained'
+        icon='alert-circle-outline'
+        style={{ marginBottom: 15 }}
+        onPress={() => {
+          const outstanding = equipment.filter((item) => item.status === 'OUT');
+
+          setFilteredEquipment(outstanding);
+
+          setSearchPressed(true);
+        }}
+      >
+        Show Outstanding Equipment
+      </Button>
 
       <Button
         mode='contained'
