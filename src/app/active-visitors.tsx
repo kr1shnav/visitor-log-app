@@ -79,6 +79,16 @@ export default function ActiveVisitorsScreen() {
             <View style={styles.nameSection}>
               <Text variant='titleMedium'>{item.full_name}</Text>
 
+              <Text
+                style={{
+                  color: '#1A237E',
+                  fontWeight: 'bold',
+                  marginBottom: 8,
+                }}
+              >
+                Visitor ID: {item.visitor_id}
+              </Text>
+              
               <Text style={styles.companyText}>{item.company_name}</Text>
             </View>
           </View>

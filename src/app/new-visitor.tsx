@@ -12,12 +12,11 @@ import { KeyboardAwareScrollView } from 'react-native-keyboard-aware-scroll-view
 
 import { useVisitor } from '../context/VisitorContext';
 
-import { createVisitor, uploadVisitorPhoto } from '../services/supabaseService';
+import { createVisitor, uploadVisitorPhoto, getVisitors } from '../services/supabaseService';
 
 import { Checkbox } from 'react-native-paper';
 
 import AsyncStorage from '@react-native-async-storage/async-storage';
-
 
 type FormData = {
   fullName: string;
@@ -123,8 +122,23 @@ export default function NewVisitorScreen() {
 
       const user = JSON.parse((await AsyncStorage.getItem('user')) || '{}');
 
+      const now = new Date();
+
+      const year = now.getFullYear();
+
+      const day = String(now.getDate()).padStart(2, '0');
+
+      const month = String(now.getMonth() + 1).padStart(2, '0');
+
+      const visitors = await getVisitors();
+
+      const visitorNo = (visitors?.length || 0) + 1;
+
+      const visitorId = `DC-${year}-${day}-${month}-${visitorNo}`;
       // Save to db
       await createVisitor({
+        visitor_id: visitorId,
+
         full_name: data.fullName,
 
         designation: data.designation,
@@ -175,276 +189,257 @@ export default function NewVisitorScreen() {
   };
 
   return (
-  <KeyboardAwareScrollView
-    contentContainerStyle={styles.container}
-    enableOnAndroid
-    extraScrollHeight={80}
-    keyboardShouldPersistTaps='handled'
-  >
-    <Text variant='headlineSmall' style={styles.pageTitle}>
-      New Visitor Entry
-    </Text>
-
-    {/* PERSONAL INFORMATION */}
-    <Card style={styles.sectionCard}>
-      <Card.Title title='Personal Information' />
-
-      <Card.Content>
-        {/* Full Name */}
-        <Controller
-          control={control}
-          name='fullName'
-          rules={{
-            required: 'Name is required',
-            pattern: {
-              value: /^[A-Za-z ]+$/,
-              message: 'Name should contain only alphabets',
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Full Name *'
-              mode='outlined'
-              value={value}
-              style={styles.input}
-              autoCapitalize='words'
-              onChangeText={onChange}
-              error={!!errors.fullName}
-            />
-          )}
-        />
-
-        {errors.fullName && (
-          <Text style={styles.errorText}>
-            {errors.fullName.message}
-          </Text>
-        )}
-
-        {/* Designation */}
-        <Controller
-          control={control}
-          name='designation'
-          rules={{
-            required: 'Designation is required',
-          }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Designation *'
-              mode='outlined'
-              value={value}
-              onChangeText={onChange}
-              style={styles.input}
-              error={!!errors.designation}
-            />
-          )}
-        />
-
-        {errors.designation && (
-          <Text style={styles.errorText}>
-            {errors.designation.message}
-          </Text>
-        )}
-
-        {/* Company */}
-        <Controller
-          control={control}
-          name='companyName'
-          rules={{
-            required: 'Company Name is required',
-          }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Company Name *'
-              mode='outlined'
-              value={value}
-              onChangeText={onChange}
-              style={styles.input}
-              error={!!errors.companyName}
-            />
-          )}
-        />
-
-        {errors.companyName && (
-          <Text style={styles.errorText}>
-            {errors.companyName.message}
-          </Text>
-        )}
-
-        {/* Mobile */}
-        <Controller
-          control={control}
-          name='mobileNo'
-          rules={{
-            required: 'Mobile number is required',
-            pattern: {
-              value: /^[0-9]{10}$/,
-              message: 'Enter a valid 10-digit mobile number',
-            },
-          }}
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Mobile Number *'
-              mode='outlined'
-              keyboardType='numeric'
-              maxLength={10}
-              style={styles.input}
-              value={value}
-              onChangeText={(text) => {
-                const numericText =
-                  text.replace(/[^0-9]/g, '');
-                onChange(numericText);
-              }}
-              error={!!errors.mobileNo}
-            />
-          )}
-        />
-
-        {errors.mobileNo && (
-          <Text style={styles.errorText}>
-            {errors.mobileNo.message}
-          </Text>
-        )}
-      </Card.Content>
-    </Card>
-
-    {/* VISIT DETAILS */}
-    <Card style={styles.sectionCard}>
-      <Card.Title title='Visit Details' />
-
-      <Card.Content>
-        <Controller
-          control={control}
-          name='purpose'
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Purpose of Visit'
-              mode='outlined'
-              style={styles.input}
-              value={value}
-              autoCapitalize='sentences'
-              onChangeText={onChange}
-            />
-          )}
-        />
-
-        <Controller
-          control={control}
-          name='vehicleNo'
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Vehicle Number'
-              mode='outlined'
-              style={styles.input}
-              value={value}
-              autoCapitalize='characters'
-              onChangeText={onChange}
-            />
-          )}
-        />
-
-        <Controller
-          control={control}
-          name='hostName'
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Host Name'
-              mode='outlined'
-              value={value}
-              onChangeText={onChange}
-              style={styles.input}
-            />
-          )}
-        />
-
-        <Controller
-          control={control}
-          name='remarks'
-          render={({ field: { onChange, value } }) => (
-            <TextInput
-              label='Remarks'
-              mode='outlined'
-              multiline
-              numberOfLines={4}
-              style={styles.input}
-              value={value}
-              onChangeText={onChange}
-            />
-          )}
-        />
-
-        <View style={styles.switchRow}>
-          <Text variant='bodyLarge'>
-            Laptop Bag
-          </Text>
-
-          <Switch
-            value={watch('laptopBag')}
-            onValueChange={(value) =>
-              setValue('laptopBag', value)
-            }
-          />
-        </View>
-      </Card.Content>
-    </Card>
-
-    {/* MEDIA */}
-    <Card style={styles.sectionCard}>
-      <Card.Title title='Visitor Photo' />
-
-      <Card.Content>
-        <Button
-          mode='outlined'
-          icon='camera'
-          onPress={pickImage}
-          style={styles.uploadButton}
-        >
-          Capture Visitor Photo
-        </Button>
-
-        {image && (
-          <Image
-            source={{ uri: image }}
-            style={styles.imagePreview}
-          />
-        )}
-
-        <Text
-          style={{
-            marginTop: 10,
-            marginBottom: 10,
-            color: '#666',
-          }}
-        >
-          ID Card Photo (Optional for APDCL Employees)
-        </Text>
-
-        <Button
-          mode='outlined'
-          icon='card-account-details'
-          onPress={pickIdImage}
-          style={styles.uploadButton}
-        >
-          Capture ID Card
-        </Button>
-
-        {idImage && (
-          <Image
-            source={{ uri: idImage }}
-            style={styles.imagePreview}
-          />
-        )}
-      </Card.Content>
-    </Card>
-
-    <Button
-      mode='contained'
-      onPress={handleSubmit(onSubmit)}
-      style={styles.submitButton}
+    <KeyboardAwareScrollView
+      contentContainerStyle={styles.container}
+      enableOnAndroid
+      extraScrollHeight={80}
+      keyboardShouldPersistTaps='handled'
     >
-      Save Visitor
-    </Button>
-  </KeyboardAwareScrollView>
-);
+      <Text variant='headlineSmall' style={styles.pageTitle}>
+        New Visitor Entry
+      </Text>
+
+      {/* PERSONAL INFORMATION */}
+      <Card style={styles.sectionCard}>
+        <Card.Title title='Personal Information' />
+
+        <Card.Content>
+          {/* Full Name */}
+          <Controller
+            control={control}
+            name='fullName'
+            rules={{
+              required: 'Name is required',
+              pattern: {
+                value: /^[A-Za-z ]+$/,
+                message: 'Name should contain only alphabets',
+              },
+            }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Full Name *'
+                mode='outlined'
+                value={value}
+                style={styles.input}
+                autoCapitalize='words'
+                onChangeText={onChange}
+                error={!!errors.fullName}
+              />
+            )}
+          />
+
+          {errors.fullName && (
+            <Text style={styles.errorText}>{errors.fullName.message}</Text>
+          )}
+
+          {/* Designation */}
+          <Controller
+            control={control}
+            name='designation'
+            rules={{
+              required: 'Designation is required',
+            }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Designation *'
+                mode='outlined'
+                value={value}
+                onChangeText={onChange}
+                style={styles.input}
+                error={!!errors.designation}
+              />
+            )}
+          />
+
+          {errors.designation && (
+            <Text style={styles.errorText}>{errors.designation.message}</Text>
+          )}
+
+          {/* Company */}
+          <Controller
+            control={control}
+            name='companyName'
+            rules={{
+              required: 'Company Name is required',
+            }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Company Name *'
+                mode='outlined'
+                value={value}
+                onChangeText={onChange}
+                style={styles.input}
+                error={!!errors.companyName}
+              />
+            )}
+          />
+
+          {errors.companyName && (
+            <Text style={styles.errorText}>{errors.companyName.message}</Text>
+          )}
+
+          {/* Mobile */}
+          <Controller
+            control={control}
+            name='mobileNo'
+            rules={{
+              required: 'Mobile number is required',
+              pattern: {
+                value: /^[0-9]{10}$/,
+                message: 'Enter a valid 10-digit mobile number',
+              },
+            }}
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Mobile Number *'
+                mode='outlined'
+                keyboardType='numeric'
+                maxLength={10}
+                style={styles.input}
+                value={value}
+                onChangeText={(text) => {
+                  const numericText = text.replace(/[^0-9]/g, '');
+                  onChange(numericText);
+                }}
+                error={!!errors.mobileNo}
+              />
+            )}
+          />
+
+          {errors.mobileNo && (
+            <Text style={styles.errorText}>{errors.mobileNo.message}</Text>
+          )}
+        </Card.Content>
+      </Card>
+
+      {/* VISIT DETAILS */}
+      <Card style={styles.sectionCard}>
+        <Card.Title title='Visit Details' />
+
+        <Card.Content>
+          <Controller
+            control={control}
+            name='purpose'
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Purpose of Visit'
+                mode='outlined'
+                style={styles.input}
+                value={value}
+                autoCapitalize='sentences'
+                onChangeText={onChange}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name='vehicleNo'
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Vehicle Number'
+                mode='outlined'
+                style={styles.input}
+                value={value}
+                autoCapitalize='characters'
+                onChangeText={onChange}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name='hostName'
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Host Name'
+                mode='outlined'
+                value={value}
+                onChangeText={onChange}
+                style={styles.input}
+              />
+            )}
+          />
+
+          <Controller
+            control={control}
+            name='remarks'
+            render={({ field: { onChange, value } }) => (
+              <TextInput
+                label='Remarks'
+                mode='outlined'
+                multiline
+                numberOfLines={4}
+                style={styles.input}
+                value={value}
+                onChangeText={onChange}
+              />
+            )}
+          />
+
+          <View style={styles.switchRow}>
+            <Text variant='bodyLarge'>Laptop Bag</Text>
+
+            <Switch
+              value={watch('laptopBag')}
+              onValueChange={(value) => setValue('laptopBag', value)}
+            />
+          </View>
+        </Card.Content>
+      </Card>
+
+      {/* MEDIA */}
+      <Card style={styles.sectionCard}>
+        <Card.Title title='Visitor Photo' />
+
+        <Card.Content>
+          <Button
+            mode='outlined'
+            icon='camera'
+            onPress={pickImage}
+            style={styles.uploadButton}
+          >
+            Capture Visitor Photo
+          </Button>
+
+          {image && (
+            <Image source={{ uri: image }} style={styles.imagePreview} />
+          )}
+
+          <Text
+            style={{
+              marginTop: 10,
+              marginBottom: 10,
+              color: '#666',
+            }}
+          >
+            ID Card Photo (Optional for APDCL Employees)
+          </Text>
+
+          <Button
+            mode='outlined'
+            icon='card-account-details'
+            onPress={pickIdImage}
+            style={styles.uploadButton}
+          >
+            Capture ID Card
+          </Button>
+
+          {idImage && (
+            <Image source={{ uri: idImage }} style={styles.imagePreview} />
+          )}
+        </Card.Content>
+      </Card>
+
+      <Button
+        mode='contained'
+        onPress={handleSubmit(onSubmit)}
+        style={styles.submitButton}
+      >
+        Save Visitor
+      </Button>
+    </KeyboardAwareScrollView>
+  );
 }
 
 const styles = StyleSheet.create({

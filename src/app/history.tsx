@@ -26,6 +26,8 @@ export default function VisitorRecordsScreen() {
   const [visitors, setVisitors] = useState<any[]>([]);
   const [filteredVisitors, setFilteredVisitors] = useState<any[]>([]);
 
+  const [visitorIdFilter, setVisitorIdFilter] = useState('');
+
   const [loading, setLoading] = useState(true);
 
   const [selectedDate, setSelectedDate] = useState<Date | null>(null);
@@ -77,70 +79,115 @@ export default function VisitorRecordsScreen() {
     });
   };
 
-  const handleSearch = () => {
-    if (!selectedDate) {
-      alert('Please select a date');
-      return;
+const handleSearch = () => {
+  if (!selectedDate) {
+    alert('Please select a date');
+    return;
+  }
+
+  const selectedYear = selectedDate.getFullYear();
+
+  const selectedMonth = String(
+    selectedDate.getMonth() + 1,
+  ).padStart(2, '0');
+
+  const selectedDay = String(
+    selectedDate.getDate(),
+  ).padStart(2, '0');
+
+  const selectedDateString =
+    `${selectedYear}-${selectedMonth}-${selectedDay}`;
+
+  console.log('Selected Date:', selectedDateString);
+
+  const results = visitors.filter((visitor) => {
+    if (!visitor.created_at) return false;
+
+    const visitorCreatedDate = new Date(
+      visitor.created_at,
+    );
+
+    const visitorYear =
+      visitorCreatedDate.getFullYear();
+
+    const visitorMonth = String(
+      visitorCreatedDate.getMonth() + 1,
+    ).padStart(2, '0');
+
+    const visitorDay = String(
+      visitorCreatedDate.getDate(),
+    ).padStart(2, '0');
+
+    const visitorDate =
+      `${visitorYear}-${visitorMonth}-${visitorDay}`;
+
+    const dateMatch =
+      visitorDate === selectedDateString;
+
+    const nameMatch =
+      !nameFilter ||
+      visitor.full_name
+        ?.toLowerCase()
+        .includes(nameFilter.toLowerCase());
+
+    const statusMatch =
+      statusFilter === 'ALL' ||
+      visitor.status === statusFilter;
+
+    // OPTIONAL VISITOR ID SEARCH
+    const visitorIdMatch =
+      !visitorIdFilter ||
+      visitor.visitor_id
+        ?.toLowerCase()
+        .includes(
+          visitorIdFilter.toLowerCase(),
+        );
+
+    let timeMatch = true;
+
+    if (
+      enableTimeFilter &&
+      fromTime &&
+      toTime
+    ) {
+      const visitorMinutes =
+        visitorCreatedDate.getHours() *
+          60 +
+        visitorCreatedDate.getMinutes();
+
+      const fromMinutes =
+        fromTime.getHours() * 60 +
+        fromTime.getMinutes();
+
+      const toMinutes =
+        toTime.getHours() * 60 +
+        toTime.getMinutes();
+
+      timeMatch =
+        visitorMinutes >=
+          fromMinutes &&
+        visitorMinutes <=
+          toMinutes;
     }
 
-    const selectedYear = selectedDate.getFullYear();
+    return (
+      dateMatch &&
+      nameMatch &&
+      statusMatch &&
+      visitorIdMatch &&
+      timeMatch
+    );
+  });
 
-    const selectedMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
+  console.log(
+    'Results Found:',
+    results.length,
+  );
 
-    const selectedDay = String(selectedDate.getDate()).padStart(2, '0');
+  setFilteredVisitors(results);
 
-    const selectedDateString = `${selectedYear}-${selectedMonth}-${selectedDay}`;
-
-    console.log('Selected Date:', selectedDateString);
-
-    const results = visitors.filter((visitor) => {
-      if (!visitor.created_at) return false;
-
-      const visitorCreatedDate = new Date(visitor.created_at);
-
-      const visitorYear = visitorCreatedDate.getFullYear();
-
-      const visitorMonth = String(visitorCreatedDate.getMonth() + 1).padStart(
-        2,
-        '0',
-      );
-
-      const visitorDay = String(visitorCreatedDate.getDate()).padStart(2, '0');
-
-      const visitorDate = `${visitorYear}-${visitorMonth}-${visitorDay}`;
-
-      const dateMatch = visitorDate === selectedDateString;
-
-      const nameMatch =
-        !nameFilter ||
-        visitor.full_name?.toLowerCase().includes(nameFilter.toLowerCase());
-
-      const statusMatch =
-        statusFilter === 'ALL' || visitor.status === statusFilter;
-
-      let timeMatch = true;
-
-      if (enableTimeFilter && fromTime && toTime) {
-        const visitorMinutes =
-          visitorCreatedDate.getHours() * 60 + visitorCreatedDate.getMinutes();
-
-        const fromMinutes = fromTime.getHours() * 60 + fromTime.getMinutes();
-
-        const toMinutes = toTime.getHours() * 60 + toTime.getMinutes();
-
-        timeMatch =
-          visitorMinutes >= fromMinutes && visitorMinutes <= toMinutes;
-      }
-
-      return dateMatch && nameMatch && statusMatch && timeMatch;
-    });
-
-    console.log('Results Found:', results.length);
-
-    setFilteredVisitors(results);
-
-    setSearchPressed(true);
-  };
+  setSearchPressed(true);
+};
 
   const exportCSV = async () => {
     try {
@@ -259,6 +306,14 @@ export default function VisitorRecordsScreen() {
         label='Visitor Name (Optional)'
         value={nameFilter}
         onChangeText={setNameFilter}
+        style={styles.searchBar}
+      />
+
+      <TextInput
+        mode='outlined'
+        label='Visitor ID (Optional)'
+        value={visitorIdFilter}
+        onChangeText={setVisitorIdFilter}
         style={styles.searchBar}
       />
 
@@ -404,6 +459,15 @@ export default function VisitorRecordsScreen() {
                   <View style={styles.cardHeader}>
                     <View>
                       <Text variant='titleMedium'>{item.full_name}</Text>
+
+                      <Text
+                        style={{
+                          color: '#1A237E',
+                          fontWeight: 'bold',
+                        }}
+                      >
+                        Visitor ID: {item.visitor_id}
+                      </Text>
 
                       <Text style={styles.companyText}>
                         {item.company_name}
