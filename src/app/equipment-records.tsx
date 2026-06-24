@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { FlatList, StyleSheet, View } from 'react-native';
+import { View, StyleSheet, FlatList, Alert } from 'react-native';
 
 import {
   Card,
@@ -19,6 +19,8 @@ import DateTimePicker from '@react-native-community/datetimepicker';
 import * as FileSystem from 'expo-file-system/legacy';
 
 import * as Sharing from 'expo-sharing';
+
+import * as Print from 'expo-print';
 
 import { getEquipmentLogs, returnEquipment } from '../services/supabaseService';
 
@@ -187,6 +189,71 @@ export default function EquipmentRecordsScreen() {
 
       alert('Failed to update equipment');
     }
+  };
+
+  const exportPDF = async () => {
+    try {
+      if (filteredEquipment.length === 0) {
+        alert('No records to export');
+        return;
+      }
+
+      let html = `
+      <h1>Equipment Report</h1>
+
+      <table border="1"
+      style="width:100%;border-collapse:collapse;">
+
+      <tr>
+        <th>Borrower</th>
+        <th>Item</th>
+        <th>Serial</th>
+        <th>Status</th>
+        <th>In Time</th>
+        <th>Out Time</th>
+      </tr>
+    `;
+
+      filteredEquipment.forEach((item) => {
+        html += `
+        <tr>
+          <td>${item.borrower_name}</td>
+          <td>${item.item_name}</td>
+          <td>${item.serial_no}</td>
+          <td>${item.status}</td>
+          <td>${formatDateTime(item.in_time)}</td>
+          <td>${item.out_time ? formatDateTime(item.out_time) : ''}</td>
+        </tr>
+      `;
+      });
+
+      html += '</table>';
+
+      const { uri } = await Print.printToFileAsync({
+        html,
+      });
+
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const showExportOptions = () => {
+    Alert.alert('Export Report', 'Choose export format', [
+      {
+        text: 'CSV',
+        onPress: exportCSV,
+      },
+      {
+        text: 'PDF',
+        onPress: exportPDF,
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
   };
 
   const exportCSV = async () => {
@@ -365,14 +432,8 @@ export default function EquipmentRecordsScreen() {
         </View>
       ) : (
         <>
-          <Button
-            mode='contained'
-            onPress={exportCSV}
-            style={{
-              marginBottom: 15,
-            }}
-          >
-            Export CSV
+          <Button mode='contained' icon='export' onPress={showExportOptions}>
+            Export Report
           </Button>
 
           <Text variant='titleMedium' style={styles.count}>

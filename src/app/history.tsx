@@ -1,6 +1,6 @@
 import React, { useEffect, useState } from 'react';
 
-import { FlatList, StyleSheet, View } from 'react-native';
+import { View, StyleSheet, FlatList, Alert } from 'react-native';
 
 import {
   Card,
@@ -21,6 +21,8 @@ import { getVisitors } from '../services/supabaseService';
 import * as FileSystem from 'expo-file-system/legacy';
 
 import * as Sharing from 'expo-sharing';
+
+import * as Print from 'expo-print';
 
 export default function VisitorRecordsScreen() {
   const [visitors, setVisitors] = useState<any[]>([]);
@@ -79,115 +81,146 @@ export default function VisitorRecordsScreen() {
     });
   };
 
-const handleSearch = () => {
-  if (!selectedDate) {
-    alert('Please select a date');
-    return;
-  }
-
-  const selectedYear = selectedDate.getFullYear();
-
-  const selectedMonth = String(
-    selectedDate.getMonth() + 1,
-  ).padStart(2, '0');
-
-  const selectedDay = String(
-    selectedDate.getDate(),
-  ).padStart(2, '0');
-
-  const selectedDateString =
-    `${selectedYear}-${selectedMonth}-${selectedDay}`;
-
-  console.log('Selected Date:', selectedDateString);
-
-  const results = visitors.filter((visitor) => {
-    if (!visitor.created_at) return false;
-
-    const visitorCreatedDate = new Date(
-      visitor.created_at,
-    );
-
-    const visitorYear =
-      visitorCreatedDate.getFullYear();
-
-    const visitorMonth = String(
-      visitorCreatedDate.getMonth() + 1,
-    ).padStart(2, '0');
-
-    const visitorDay = String(
-      visitorCreatedDate.getDate(),
-    ).padStart(2, '0');
-
-    const visitorDate =
-      `${visitorYear}-${visitorMonth}-${visitorDay}`;
-
-    const dateMatch =
-      visitorDate === selectedDateString;
-
-    const nameMatch =
-      !nameFilter ||
-      visitor.full_name
-        ?.toLowerCase()
-        .includes(nameFilter.toLowerCase());
-
-    const statusMatch =
-      statusFilter === 'ALL' ||
-      visitor.status === statusFilter;
-
-    // OPTIONAL VISITOR ID SEARCH
-    const visitorIdMatch =
-      !visitorIdFilter ||
-      visitor.visitor_id
-        ?.toLowerCase()
-        .includes(
-          visitorIdFilter.toLowerCase(),
-        );
-
-    let timeMatch = true;
-
-    if (
-      enableTimeFilter &&
-      fromTime &&
-      toTime
-    ) {
-      const visitorMinutes =
-        visitorCreatedDate.getHours() *
-          60 +
-        visitorCreatedDate.getMinutes();
-
-      const fromMinutes =
-        fromTime.getHours() * 60 +
-        fromTime.getMinutes();
-
-      const toMinutes =
-        toTime.getHours() * 60 +
-        toTime.getMinutes();
-
-      timeMatch =
-        visitorMinutes >=
-          fromMinutes &&
-        visitorMinutes <=
-          toMinutes;
+  const handleSearch = () => {
+    if (!selectedDate) {
+      alert('Please select a date');
+      return;
     }
 
-    return (
-      dateMatch &&
-      nameMatch &&
-      statusMatch &&
-      visitorIdMatch &&
-      timeMatch
-    );
-  });
+    const selectedYear = selectedDate.getFullYear();
 
-  console.log(
-    'Results Found:',
-    results.length,
-  );
+    const selectedMonth = String(selectedDate.getMonth() + 1).padStart(2, '0');
 
-  setFilteredVisitors(results);
+    const selectedDay = String(selectedDate.getDate()).padStart(2, '0');
 
-  setSearchPressed(true);
-};
+    const selectedDateString = `${selectedYear}-${selectedMonth}-${selectedDay}`;
+
+    console.log('Selected Date:', selectedDateString);
+
+    const results = visitors.filter((visitor) => {
+      if (!visitor.created_at) return false;
+
+      const visitorCreatedDate = new Date(visitor.created_at);
+
+      const visitorYear = visitorCreatedDate.getFullYear();
+
+      const visitorMonth = String(visitorCreatedDate.getMonth() + 1).padStart(
+        2,
+        '0',
+      );
+
+      const visitorDay = String(visitorCreatedDate.getDate()).padStart(2, '0');
+
+      const visitorDate = `${visitorYear}-${visitorMonth}-${visitorDay}`;
+
+      const dateMatch = visitorDate === selectedDateString;
+
+      const nameMatch =
+        !nameFilter ||
+        visitor.full_name?.toLowerCase().includes(nameFilter.toLowerCase());
+
+      const statusMatch =
+        statusFilter === 'ALL' || visitor.status === statusFilter;
+
+      // OPTIONAL VISITOR ID SEARCH
+      const visitorIdMatch =
+        !visitorIdFilter ||
+        visitor.visitor_id
+          ?.toLowerCase()
+          .includes(visitorIdFilter.toLowerCase());
+
+      let timeMatch = true;
+
+      if (enableTimeFilter && fromTime && toTime) {
+        const visitorMinutes =
+          visitorCreatedDate.getHours() * 60 + visitorCreatedDate.getMinutes();
+
+        const fromMinutes = fromTime.getHours() * 60 + fromTime.getMinutes();
+
+        const toMinutes = toTime.getHours() * 60 + toTime.getMinutes();
+
+        timeMatch =
+          visitorMinutes >= fromMinutes && visitorMinutes <= toMinutes;
+      }
+
+      return (
+        dateMatch && nameMatch && statusMatch && visitorIdMatch && timeMatch
+      );
+    });
+
+    console.log('Results Found:', results.length);
+
+    setFilteredVisitors(results);
+
+    setSearchPressed(true);
+  };
+
+  const exportPDF = async () => {
+    try {
+      if (filteredVisitors.length === 0) {
+        alert('No records to export');
+        return;
+      }
+
+      let html = `
+      <h1>Visitor Report</h1>
+
+      <table border="1"
+        style="width:100%;border-collapse:collapse;">
+
+        <tr>
+          <th>ID</th>
+          <th>Name</th>
+          <th>Company</th>
+          <th>Mobile</th>
+          <th>Status</th>
+          <th>In Time</th>
+          <th>Out Time</th>
+        </tr>
+    `;
+
+      filteredVisitors.forEach((visitor) => {
+        html += `
+        <tr>
+          <td>${visitor.visitor_id || ''}</td>
+          <td>${visitor.full_name || ''}</td>
+          <td>${visitor.company_name || ''}</td>
+          <td>${visitor.mobile_no || ''}</td>
+          <td>${visitor.status || ''}</td>
+          <td>${formatDateTime(visitor.in_time)}</td>
+          <td>${visitor.out_time ? formatDateTime(visitor.out_time) : ''}</td>
+        </tr>
+      `;
+      });
+
+      html += '</table>';
+
+      const { uri } = await Print.printToFileAsync({
+        html,
+      });
+
+      await Sharing.shareAsync(uri);
+    } catch (error) {
+      console.log(error);
+    }
+  };
+
+  const showExportOptions = () => {
+    Alert.alert('Export Report', 'Choose export format', [
+      {
+        text: 'CSV',
+        onPress: exportCSV,
+      },
+      {
+        text: 'PDF',
+        onPress: exportPDF,
+      },
+      {
+        text: 'Cancel',
+        style: 'cancel',
+      },
+    ]);
+  };
 
   const exportCSV = async () => {
     try {
@@ -440,14 +473,8 @@ const handleSearch = () => {
             Visitors Found: {filteredVisitors.length}
           </Text>
 
-          <Button
-            mode='contained'
-            onPress={exportCSV}
-            style={{
-              marginBottom: 15,
-            }}
-          >
-            Export CSV
+          <Button mode='contained' icon='export' onPress={showExportOptions}>
+            Export Report
           </Button>
 
           <FlatList
