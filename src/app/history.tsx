@@ -250,6 +250,7 @@ export default function VisitorRecordsScreen() {
 
       const rows = filteredVisitors.map((visitor) => [
         visitor.id,
+        visitor.visitor_id || '',
         visitor.full_name || '',
         visitor.designation || '',
         visitor.company_name || '',
@@ -262,8 +263,8 @@ export default function VisitorRecordsScreen() {
         visitor.status || '',
         formatDateTime(visitor.in_time),
         visitor.out_time ? formatDateTime(visitor.out_time) : '',
-        visitor.image_url ? 'Yes' : 'No',
-        visitor.id_card_image_url ? 'Yes' : 'No',
+        visitor.image_url || '',
+        visitor.id_card_image_url || '',
         formatDateTime(visitor.created_at),
       ]);
 
