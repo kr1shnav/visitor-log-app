@@ -343,17 +343,14 @@ export default function EquipmentRecordsScreen() {
         <DateTimePicker
           value={selectedDate || new Date()}
           mode='date'
+          display='default'
+          maximumDate={new Date()}
           onChange={(event, date) => {
-            if (event.type === 'dismissed') {
-              setShowDatePicker(false);
-              return;
-            }
+            setShowDatePicker(false);
 
             if (date) {
               setSelectedDate(date);
             }
-
-            setShowDatePicker(false);
           }}
         />
       )}

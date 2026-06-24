@@ -324,10 +324,11 @@ export default function VisitorRecordsScreen() {
           value={selectedDate || new Date()}
           mode='date'
           display='default'
+          maximumDate={new Date()}
           onChange={(event, date) => {
             setShowDatePicker(false);
 
-            if (event.type === 'set' && date) {
+            if (date) {
               setSelectedDate(date);
             }
           }}
