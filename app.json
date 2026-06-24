@@ -16,7 +16,7 @@
       }
     },
     "android": {
-      "package": "com.anonymous.visitorlogapp",
+      "package": "com.krishnav.visitorlogapp",
       "permissions": [
         "CAMERA",
         "READ_MEDIA_IMAGES"
