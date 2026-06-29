@@ -1,6 +1,13 @@
-import React from 'react';
+import React, { useState } from 'react';
 
-import { ScrollView, StyleSheet, Alert } from 'react-native';
+import {
+  ScrollView,
+  StyleSheet,
+  Alert,
+  Image,
+  TouchableOpacity,
+  View,
+} from 'react-native';
 
 import {
   TextInput,
@@ -15,6 +22,12 @@ import AsyncStorage from '@react-native-async-storage/async-storage';
 
 import { createEquipmentLog } from '../services/supabaseService';
 
+import { supabase } from '../lib/supabase';
+
+import * as ImagePicker from 'expo-image-picker';
+
+import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
+
 interface FormData {
   borrowerName: string;
   phoneNo: string;
@@ -25,6 +38,8 @@ interface FormData {
 }
 
 export default function EquipmentEntryScreen() {
+  const [photo, setPhoto] = useState<string | null>(null);
+
   const {
     control,
     handleSubmit,
@@ -41,12 +56,65 @@ export default function EquipmentEntryScreen() {
     },
   });
 
+  const pickPhoto = async () => {
+    const permission =
+      await ImagePicker.requestCameraPermissionsAsync();
+
+    if (!permission.granted) {
+      Alert.alert(
+        'Permission Required',
+        'Camera permission is required',
+      );
+      return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      allowsEditing: true,
+      quality: 0.7,
+    });
+
+    if (!result.canceled) {
+      setPhoto(result.assets[0].uri);
+    }
+  };
+
+  const uploadPhoto = async () => {
+    if (!photo) return null;
+
+    try {
+      const response = await fetch(photo);
+
+      const blob = await response.blob();
+
+      const fileName = `equipment_${Date.now()}.jpg`;
+
+      const { error } = await supabase.storage
+        .from('equipment-photos')
+        .upload(fileName, blob, {
+          contentType: 'image/jpeg',
+        });
+
+      if (error) throw error;
+
+      const { data } = supabase.storage
+        .from('equipment-photos')
+        .getPublicUrl(fileName);
+
+      return data.publicUrl;
+    } catch (error) {
+      console.log(error);
+      return null;
+    }
+  };
+
   const onSubmit = async (data: FormData) => {
     const user = JSON.parse(
       (await AsyncStorage.getItem('user')) || '{}',
     );
 
     try {
+      const photoUrl = await uploadPhoto();
+
       await createEquipmentLog({
         borrower_name: data.borrowerName,
         phone_no: data.phoneNo,
@@ -54,7 +122,11 @@ export default function EquipmentEntryScreen() {
         serial_no: data.serialNo,
         quantity: Number(data.quantity),
         remarks: data.remarks,
+
+        photo_url: photoUrl,
+
         status: 'OUT',
+
         created_by: user.username,
         created_by_name: user.full_name,
       });
@@ -63,6 +135,8 @@ export default function EquipmentEntryScreen() {
         'Success',
         'Equipment entry saved successfully',
       );
+
+      setPhoto(null);
 
       reset();
     } catch (error) {
@@ -223,7 +297,9 @@ export default function EquipmentEntryScreen() {
                 keyboardType='numeric'
                 value={value}
                 onChangeText={(text) =>
-                  onChange(text.replace(/[^0-9]/g, ''))
+                  onChange(
+                    text.replace(/[^0-9]/g, ''),
+                  )
                 }
                 style={styles.input}
                 error={!!errors.quantity}
@@ -252,6 +328,38 @@ export default function EquipmentEntryScreen() {
               />
             )}
           />
+        </Card.Content>
+      </Card>
+
+      {/* Photo */}
+
+      <Card style={styles.sectionCard}>
+        <Card.Title title='Equipment Photo' />
+
+        <Card.Content>
+          <TouchableOpacity
+            style={styles.photoContainer}
+            onPress={pickPhoto}
+          >
+            {photo ? (
+              <Image
+                source={{ uri: photo }}
+                style={styles.photo}
+              />
+            ) : (
+              <View style={styles.photoPlaceholder}>
+                <MaterialCommunityIcons
+                  name='camera'
+                  size={50}
+                  color='#64748B'
+                />
+
+                <Text style={{ marginTop: 10 }}>
+                  Capture Equipment Photo
+                </Text>
+              </View>
+            )}
+          </TouchableOpacity>
         </Card.Content>
       </Card>
 
@@ -295,6 +403,26 @@ const styles = StyleSheet.create({
     marginTop: -10,
     marginBottom: 10,
     marginLeft: 5,
+  },
+
+  photoContainer: {
+    borderWidth: 2,
+    borderStyle: 'dashed',
+    borderColor: '#CBD5E1',
+    borderRadius: 12,
+    height: 220,
+    overflow: 'hidden',
+  },
+
+  photoPlaceholder: {
+    flex: 1,
+    justifyContent: 'center',
+    alignItems: 'center',
+  },
+
+  photo: {
+    width: '100%',
+    height: '100%',
   },
 
   submitButton: {
