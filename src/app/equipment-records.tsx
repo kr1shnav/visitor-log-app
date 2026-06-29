@@ -2,6 +2,8 @@ import React, { useEffect, useState } from 'react';
 
 import { View, StyleSheet, FlatList, Alert } from 'react-native';
 
+import { Image } from 'react-native';
+
 import {
   Card,
   Text,
@@ -458,6 +460,14 @@ export default function EquipmentRecordsScreen() {
 
                   <Divider style={{ marginVertical: 10 }} />
 
+                  {item.photo_url && (
+                    <Image
+                      source={{ uri: item.photo_url }}
+                      style={styles.equipmentPhoto}
+                      resizeMode='cover'
+                    />
+                  )}
+
                   <Text>Borrower: {item.borrower_name}</Text>
 
                   <Text>Phone: {item.phone_no}</Text>
@@ -547,6 +557,14 @@ const styles = StyleSheet.create({
     color: '#64748B',
     textAlign: 'center',
     marginTop: 10,
+  },
+
+  equipmentPhoto: {
+    width: '100%',
+    height: 180,
+    borderRadius: 12,
+    marginBottom: 15,
+    backgroundColor: '#E5E7EB',
   },
 
   cardHeader: {
