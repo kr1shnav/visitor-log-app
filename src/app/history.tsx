@@ -164,19 +164,50 @@ export default function VisitorRecordsScreen() {
 
       let html = `
       <html>
-        <body style="font-family: Arial; padding: 20px;">
-          <h1 style="text-align: center;">
-            Visitor Report
-          </h1>
+        <head>
+          <style>
+            body {
+              font-family: Arial, sans-serif;
+              padding: 15px;
+            }
 
-          <table
-            border="1"
-            style="
-              width:100%;
-              border-collapse:collapse;
-              font-size:12px;
-            "
-          >
+            h1 {
+              text-align: center;
+              color: #1A237E;
+            }
+
+            table {
+              width: 100%;
+              border-collapse: collapse;
+              font-size: 9px;
+            }
+
+            th, td {
+              border: 1px solid #000;
+              padding: 5px;
+              text-align: left;
+              word-wrap: break-word;
+            }
+
+            th {
+              background-color: #1A237E;
+              color: white;
+            }
+
+            tr:nth-child(even) {
+              background-color: #f2f2f2;
+            }
+
+            a {
+              color: blue;
+            }
+          </style>
+        </head>
+
+        <body>
+          <h1>Visitor Report</h1>
+
+          <table>
             <tr>
               <th>Visitor ID</th>
               <th>Name</th>
@@ -185,6 +216,8 @@ export default function VisitorRecordsScreen() {
               <th>Status</th>
               <th>In Time</th>
               <th>Out Time</th>
+              <th>Photo</th>
+              <th>ID Card</th>
             </tr>
     `;
 
@@ -192,13 +225,35 @@ export default function VisitorRecordsScreen() {
         html += `
         <tr>
           <td>${visitor.visitor_id || ''}</td>
+
           <td>${visitor.full_name || ''}</td>
+
           <td>${visitor.company_name || ''}</td>
+
           <td>${visitor.mobile_no || ''}</td>
+
           <td>${visitor.status || ''}</td>
+
           <td>${formatDateTime(visitor.in_time)}</td>
+
           <td>
             ${visitor.out_time ? formatDateTime(visitor.out_time) : ''}
+          </td>
+
+          <td>
+            ${
+              visitor.image_url
+                ? `<a href="${visitor.image_url}">Photo Link</a>`
+                : 'N/A'
+            }
+          </td>
+
+          <td>
+            ${
+              visitor.id_card_image_url
+                ? `<a href="${visitor.id_card_image_url}">ID Card Link</a>`
+                : 'N/A'
+            }
           </td>
         </tr>
       `;
@@ -207,10 +262,13 @@ export default function VisitorRecordsScreen() {
       html += `
           </table>
 
-          <p style="margin-top:20px;">
-            Generated on:
+          <br />
+
+          <p>
+            Generated On:
             ${new Date().toLocaleString()}
           </p>
+
         </body>
       </html>
     `;
@@ -241,6 +299,7 @@ export default function VisitorRecordsScreen() {
       Alert.alert('Error', 'Failed to export PDF');
     }
   };
+
   const showExportOptions = () => {
     Alert.alert('Export Report', 'Choose export format', [
       {
