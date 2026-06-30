@@ -158,25 +158,34 @@ export default function VisitorRecordsScreen() {
   const exportPDF = async () => {
     try {
       if (filteredVisitors.length === 0) {
-        alert('No records to export');
+        Alert.alert('No Records', 'No records available to export');
         return;
       }
 
       let html = `
-      <h1>Visitor Report</h1>
+      <html>
+        <body style="font-family: Arial; padding: 20px;">
+          <h1 style="text-align: center;">
+            Visitor Report
+          </h1>
 
-      <table border="1"
-        style="width:100%;border-collapse:collapse;">
-
-        <tr>
-          <th>ID</th>
-          <th>Name</th>
-          <th>Company</th>
-          <th>Mobile</th>
-          <th>Status</th>
-          <th>In Time</th>
-          <th>Out Time</th>
-        </tr>
+          <table
+            border="1"
+            style="
+              width:100%;
+              border-collapse:collapse;
+              font-size:12px;
+            "
+          >
+            <tr>
+              <th>Visitor ID</th>
+              <th>Name</th>
+              <th>Company</th>
+              <th>Mobile</th>
+              <th>Status</th>
+              <th>In Time</th>
+              <th>Out Time</th>
+            </tr>
     `;
 
       filteredVisitors.forEach((visitor) => {
@@ -188,23 +197,50 @@ export default function VisitorRecordsScreen() {
           <td>${visitor.mobile_no || ''}</td>
           <td>${visitor.status || ''}</td>
           <td>${formatDateTime(visitor.in_time)}</td>
-          <td>${visitor.out_time ? formatDateTime(visitor.out_time) : ''}</td>
+          <td>
+            ${visitor.out_time ? formatDateTime(visitor.out_time) : ''}
+          </td>
         </tr>
       `;
       });
 
-      html += '</table>';
+      html += `
+          </table>
+
+          <p style="margin-top:20px;">
+            Generated on:
+            ${new Date().toLocaleString()}
+          </p>
+        </body>
+      </html>
+    `;
 
       const { uri } = await Print.printToFileAsync({
         html,
       });
 
-      await Sharing.shareAsync(uri);
+      const fileName = `visitor_report_${Date.now()}.pdf`;
+
+      const newPath = FileSystem.documentDirectory + fileName;
+
+      await FileSystem.copyAsync({
+        from: uri,
+        to: newPath,
+      });
+
+      await Sharing.shareAsync(newPath, {
+        mimeType: 'application/pdf',
+        dialogTitle: 'Save Visitor Report',
+        UTI: 'com.adobe.pdf',
+      });
+
+      Alert.alert('Success', 'PDF generated successfully');
     } catch (error) {
       console.log(error);
+
+      Alert.alert('Error', 'Failed to export PDF');
     }
   };
-
   const showExportOptions = () => {
     Alert.alert('Export Report', 'Choose export format', [
       {
@@ -225,47 +261,28 @@ export default function VisitorRecordsScreen() {
   const exportCSV = async () => {
     try {
       if (filteredVisitors.length === 0) {
-        alert('No records to export');
+        Alert.alert('No records to export');
         return;
       }
 
       const headers = [
         'Visitor ID',
-        'Full Name',
-        'Designation',
-        'Company Name',
-        'Mobile Number',
-        'Laptop Bag',
-        'Purpose',
-        'Host Name',
-        'Vehicle Number',
-        'Remarks',
+        'Name',
+        'Company',
+        'Mobile',
         'Status',
         'In Time',
         'Out Time',
-        'Photo Available',
-        'ID Card Available',
-        'Created At',
       ];
 
       const rows = filteredVisitors.map((visitor) => [
-        visitor.id,
         visitor.visitor_id || '',
         visitor.full_name || '',
-        visitor.designation || '',
         visitor.company_name || '',
         visitor.mobile_no || '',
-        visitor.laptop_bag ? 'Yes' : 'No',
-        visitor.purpose || '',
-        visitor.host_name || '',
-        visitor.vehicle_no || '',
-        visitor.remarks || '',
         visitor.status || '',
         formatDateTime(visitor.in_time),
         visitor.out_time ? formatDateTime(visitor.out_time) : '',
-        visitor.image_url || '',
-        visitor.id_card_image_url || '',
-        formatDateTime(visitor.created_at),
       ]);
 
       const csvContent = [
@@ -277,21 +294,24 @@ export default function VisitorRecordsScreen() {
         ),
       ].join('\n');
 
-      const fileUri =
-        FileSystem.documentDirectory + `visitor_records_${Date.now()}.csv`;
+      const fileName = `visitor_report_${Date.now()}.csv`;
+
+      const fileUri = FileSystem.documentDirectory + fileName;
 
       await FileSystem.writeAsStringAsync(fileUri, csvContent, {
         encoding: FileSystem.EncodingType.UTF8,
       });
 
+      // Opens Android save dialog
       await Sharing.shareAsync(fileUri);
+
+      Alert.alert('Success', 'Report generated successfully');
     } catch (error) {
       console.log(error);
 
-      alert('Failed to export CSV');
+      Alert.alert('Error', 'Failed to export report');
     }
   };
-
   if (loading) {
     return (
       <View style={styles.emptyContainer}>
