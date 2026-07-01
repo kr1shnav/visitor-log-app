@@ -189,7 +189,7 @@ const styles = StyleSheet.create({
 
     backgroundColor: COLORS.background,
 
-    padding: 16,
+    padding: 10,
   },
 
   header: {
@@ -222,14 +222,8 @@ const styles = StyleSheet.create({
 
   metricsGrid: {
     flexDirection: 'row',
-
     flexWrap: 'wrap',
-
-    justifyContent: 'space-between',
-
-    gap: 14,
-
-    marginBottom: 30,
+    gap: 10, // gap alone handles spacing
   },
 
   grid: {

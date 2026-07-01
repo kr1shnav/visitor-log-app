@@ -56,7 +56,7 @@ export default function MetricCard({
 
 const styles = StyleSheet.create({
   card: {
-    width: '48%',
+    width: '47%',
 
     borderRadius: 18,
 
